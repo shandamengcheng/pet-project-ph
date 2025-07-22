@@ -44,7 +44,7 @@
     "cmdk": "latest",
     "cors": "latest",
     "crypto": "latest",
-    "date-fns": "4.1.0",
+    "date-fns": "latest",
     "dotenv": "latest",
     "embla-carousel-react": "latest",
     "express": "latest",
