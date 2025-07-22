@@ -1,45 +1,49 @@
 # 宠物详情页面 API 接口文档
 
-## 概述
+本文档详细描述了宠物详情页面（`/pets/[id]`）所需的所有API接口。
 
-本文档详细描述了宠物详情页面（`/pets/[id]`）所需的所有API接口。该页面展示单个宠物的详细信息，包括基本信息、图片画廊、医疗记录、领养信息等，并提供收藏、分享、申请领养等功能。
+## 页面功能概述
 
-**页面路径**: `/pets/[id]`  
-**对应组件**: `app/pets/[id]/page.tsx`
+宠物详情页面是用户了解特定宠物信息的核心页面，包含以下主要功能：
+
+- 展示宠物的详细信息（基本信息、医疗记录、性格特点等）
+- 图片轮播展示
+- 收藏/取消收藏功能
+- 分享功能
+- 相关宠物推荐
+- 领养申请入口
+- 浏览量统计
 
 ---
 
-## 接口列表
+## API 接口列表
 
 ### 1. 获取宠物详情
 
 **GET** `/api/pets/:id`
 
-获取指定宠物的完整详细信息，包括所有相关数据。
+获取指定宠物的完整详细信息。
 
-#### 请求参数
+#### 路径参数
 
-**路径参数**
-
-| 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
 | id | string | 是 | 宠物的唯一标识符 |
 
-**查询参数**
+#### 查询参数
 
-| 参数名 | 类型 | 必填 | 默认值 | 说明 |
-|--------|------|------|--------|------|
-| include | string | 否 | all | 包含的关联数据，可选值：basic, medical, adoption, gallery, stats |
+| 参数 | 类型 | 必填 | 说明 | 默认值 |
+|------|------|------|------|--------|
+| include_stats | boolean | 否 | 是否包含统计信息 | false |
+| user_id | string | 否 | 当前用户ID（用于个性化数据） | - |
 
 #### 请求示例
 
 \`\`\`bash
-GET /api/pets/64f1a2b3c4d5e6f7g8h9i0j1?include=all
+GET /api/pets/64f1a2b3c4d5e6f7g8h9i0j1?include_stats=true&user_id=64f1a2b3c4d5e6f7g8h9i0j2
 \`\`\`
 
-#### 响应数据
-
-**成功响应 (200)**
+#### 响应示例
 
 \`\`\`json
 {
@@ -55,174 +59,118 @@ GET /api/pets/64f1a2b3c4d5e6f7g8h9i0j1?include=all
       "weight": "25kg",
       "size": "大型",
       "color": "金黄色",
-      "location": "北京",
-      "description": "小白是一只非常温顺友好的金毛犬，特别喜欢和小朋友玩耍。它性格开朗活泼，对人类非常友善，是理想的家庭伴侣。小白已经完成了所有必要的疫苗接种，身体健康状况良好。它喜欢户外活动，每天需要适量的运动来保持健康。",
-      "personality": ["友善", "活泼", "聪明", "忠诚"],
-      "images": {
-        "primary": {
-          "url": "https://example.com/pets/pet1-main.jpg",
-          "alt": "小白的主要照片",
-          "width": 800,
-          "height": 600
+      "location": "北京市朝阳区",
+      "description": "温顺友好的金毛犬，特别喜欢和小朋友玩耍。已经完成基础训练，会坐下、握手等基本指令。性格活泼但不过分兴奋，是理想的家庭伴侣。",
+      "personality": ["友善", "活泼", "聪明", "忠诚", "温顺"],
+      "images": [
+        {
+          "id": "img_001",
+          "url": "https://example.com/pets/xiaobai_1.jpg",
+          "alt": "小白正面照",
+          "isPrimary": true,
+          "order": 1
         },
-        "gallery": [
-          {
-            "id": "img1",
-            "url": "https://example.com/pets/pet1-1.jpg",
-            "alt": "小白在公园玩耍",
-            "width": 400,
-            "height": 300,
-            "thumbnail": "https://example.com/pets/thumbs/pet1-1.jpg"
-          },
-          {
-            "id": "img2",
-            "url": "https://example.com/pets/pet1-2.jpg",
-            "alt": "小白和小朋友互动",
-            "width": 400,
-            "height": 300,
-            "thumbnail": "https://example.com/pets/thumbs/pet1-2.jpg"
-          },
-          {
-            "id": "img3",
-            "url": "https://example.com/pets/pet1-3.jpg",
-            "alt": "小白在家中休息",
-            "width": 400,
-            "height": 300,
-            "thumbnail": "https://example.com/pets/thumbs/pet1-3.jpg"
-          }
-        ]
-      },
+        {
+          "id": "img_002", 
+          "url": "https://example.com/pets/xiaobai_2.jpg",
+          "alt": "小白侧面照",
+          "isPrimary": false,
+          "order": 2
+        },
+        {
+          "id": "img_003",
+          "url": "https://example.com/pets/xiaobai_3.jpg", 
+          "alt": "小白玩耍照",
+          "isPrimary": false,
+          "order": 3
+        }
+      ],
       "medicalInfo": {
         "vaccinated": true,
         "vaccinationDate": "2024-01-10T00:00:00.000Z",
-        "vaccines": [
-          {
-            "name": "狂犬疫苗",
-            "date": "2024-01-10T00:00:00.000Z",
-            "nextDue": "2025-01-10T00:00:00.000Z"
-          },
-          {
-            "name": "六联疫苗",
-            "date": "2024-01-05T00:00:00.000Z",
-            "nextDue": "2025-01-05T00:00:00.000Z"
-          }
-        ],
+        "nextVaccinationDue": "2025-01-10T00:00:00.000Z",
         "neutered": false,
         "microchipped": true,
-        "microchipId": "123456789012345",
-        "medicalHistory": "已完成狂犬疫苗、六联疫苗接种，定期驱虫",
-        "specialNeeds": "需要每天至少1小时的户外运动",
+        "microchipId": "982000123456789",
+        "medicalHistory": [
+          {
+            "date": "2024-01-10T00:00:00.000Z",
+            "type": "疫苗接种",
+            "description": "完成狂犬疫苗和六联疫苗接种",
+            "veterinarian": "李医生"
+          },
+          {
+            "date": "2023-12-15T00:00:00.000Z",
+            "type": "健康检查",
+            "description": "全面体检，各项指标正常",
+            "veterinarian": "王医生"
+          }
+        ],
+        "specialNeeds": "需要每天至少1小时的户外运动，建议早晚各一次散步",
         "allergies": [],
         "medications": [],
-        "lastCheckup": "2024-01-15T00:00:00.000Z",
-        "veterinarian": {
-          "name": "李医生",
-          "clinic": "爱宠动物医院",
-          "phone": "010-12345678"
-        }
+        "healthStatus": "excellent"
       },
       "adoptionInfo": {
         "fee": 500,
         "currency": "CNY",
         "status": "available",
-        "statusUpdatedAt": "2024-01-15T08:30:00.000Z",
-        "idealFamily": "适合有孩子的家庭，需要有院子或经常带它外出运动的家庭",
+        "idealFamily": "适合有孩子的家庭，最好有养狗经验。需要有足够的时间陪伴和运动。",
         "requirements": [
           "有固定住所",
-          "有稳定收入",
-          "同意家访",
-          "有养狗经验优先",
-          "能提供充足的运动空间"
+          "有稳定收入来源", 
+          "同意定期家访",
+          "承诺不遗弃",
+          "有时间每天遛狗"
         ],
         "adoptionProcess": [
           "填写领养申请表",
-          "等待初步审核",
-          "安排家访",
+          "电话初步沟通",
+          "安排见面",
+          "家访评估",
           "签署领养协议",
           "办理领养手续"
-        ],
-        "estimatedProcessTime": "7-14天"
+        ]
       },
-      "rescueInfo": {
-        "rescueDate": "2023-10-15T00:00:00.000Z",
-        "rescueLocation": "北京市朝阳区某公园",
-        "rescueStory": "小白是从一个繁殖场救助出来的，之前生活条件不太好。经过我们几个月的悉心照料，现在已经完全恢复健康，正在寻找一个永远的家。",
-        "rescuer": {
-          "name": "张志愿者",
-          "organization": "爱宠救助中心"
-        },
-        "rehabilitationNotes": "经过3个月的康复治疗，小白已经完全恢复健康，性格也变得开朗活泼。"
-      },
-      "stats": {
-        "views": 1256,
-        "likes": 89,
-        "shares": 23,
-        "inquiries": 15,
-        "applications": 3
-      },
-      "contact": {
-        "organization": "爱宠之家救助中心",
-        "phone": "400-123-4567",
-        "email": "adopt@petlove.com",
+      "rescueStory": "小白是从一个非法繁殖场救助出来的。当时它营养不良，毛发暗淡，经过3个月的精心照料，现在已经完全恢复健康。它非常渴望有一个真正的家，能够给予它足够的爱和关怀。",
+      "currentLocation": {
+        "shelter": "爱心动物救助中心",
         "address": "北京市朝阳区宠物大街123号",
-        "workingHours": {
-          "weekdays": "09:00-18:00",
-          "weekends": "09:00-17:00"
-        },
-        "emergencyContact": "400-999-8888"
+        "contact": {
+          "phone": "010-12345678",
+          "email": "contact@petlove.com"
+        }
+      },
+      "caretaker": {
+        "id": "64f1a2b3c4d5e6f7g8h9i0j3",
+        "name": "张志愿者",
+        "role": "志愿者",
+        "experience": "3年救助经验",
+        "avatar": "https://example.com/avatars/volunteer1.jpg"
       },
       "featured": true,
-      "priority": 1,
-      "createdBy": {
-        "id": "64f1a2b3c4d5e6f7g8h9i0j3",
-        "name": "管理员",
-        "role": "admin"
-      },
+      "urgent": false,
+      "views": 1256,
+      "likes": 89,
+      "shares": 23,
+      "isLikedByUser": false,
       "createdAt": "2024-01-15T08:30:00.000Z",
-      "updatedAt": "2024-01-16T09:15:00.000Z",
-      "publishedAt": "2024-01-15T10:00:00.000Z"
+      "updatedAt": "2024-01-20T10:15:00.000Z"
     },
-    "userInteraction": {
-      "isLiked": false,
-      "isBookmarked": false,
-      "hasApplied": false,
-      "lastViewed": null
-    },
-    "relatedPets": [
-      {
-        "id": "64f1a2b3c4d5e6f7g8h9i0j2",
-        "name": "小黑",
-        "type": "狗狗",
-        "breed": "拉布拉多",
-        "age": "1岁",
-        "image": "https://example.com/pets/pet2-thumb.jpg",
-        "adoptionFee": 400,
-        "location": "北京"
-      },
-      {
-        "id": "64f1a2b3c4d5e6f7g8h9i0j3",
-        "name": "咪咪",
-        "type": "猫咪",
-        "breed": "英短",
-        "age": "2岁",
-        "image": "https://example.com/pets/pet3-thumb.jpg",
-        "adoptionFee": 300,
-        "location": "北京"
-      }
-    ]
-  },
-  "meta": {
-    "requestId": "req_123456789",
-    "timestamp": "2024-01-20T10:30:00.000Z",
-    "version": "1.0"
+    "stats": {
+      "totalViews": 1256,
+      "todayViews": 45,
+      "totalLikes": 89,
+      "totalShares": 23,
+      "inquiries": 12
+    }
   }
 }
 \`\`\`
 
-**错误响应**
+#### 错误响应
 
 \`\`\`json
-// 404 - 宠物不存在
 {
   "success": false,
   "error": {
@@ -231,23 +179,6 @@ GET /api/pets/64f1a2b3c4d5e6f7g8h9i0j1?include=all
     "details": {
       "petId": "64f1a2b3c4d5e6f7g8h9i0j1"
     }
-  },
-  "meta": {
-    "requestId": "req_123456789",
-    "timestamp": "2024-01-20T10:30:00.000Z"
-  }
-}
-
-// 500 - 服务器错误
-{
-  "success": false,
-  "error": {
-    "code": "INTERNAL_SERVER_ERROR",
-    "message": "服务器内部错误，请稍后重试"
-  },
-  "meta": {
-    "requestId": "req_123456789",
-    "timestamp": "2024-01-20T10:30:00.000Z"
   }
 }
 \`\`\`
@@ -260,21 +191,20 @@ GET /api/pets/64f1a2b3c4d5e6f7g8h9i0j1?include=all
 
 🔒 **需要用户认证**
 
-用户收藏或取消收藏指定宠物。如果用户已收藏该宠物，则取消收藏；如果未收藏，则添加收藏。
+收藏或取消收藏指定宠物。
 
-#### 请求参数
+#### 路径参数
 
-**路径参数**
-
-| 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
 | id | string | 是 | 宠物的唯一标识符 |
 
-**请求头**
+#### 请求头
 
-| 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
-| Authorization | string | 是 | Bearer token格式的用户认证令牌 |
+\`\`\`
+Authorization: Bearer <jwt_token>
+Content-Type: application/json
+\`\`\`
 
 #### 请求示例
 
@@ -283,127 +213,77 @@ POST /api/pets/64f1a2b3c4d5e6f7g8h9i0j1/like
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 \`\`\`
 
-#### 响应数据
-
-**成功响应 (200)**
+#### 响应示例
 
 \`\`\`json
 {
   "success": true,
   "data": {
-    "action": "liked",
     "liked": true,
     "likesCount": 90,
     "message": "收藏成功"
-  },
-  "meta": {
-    "requestId": "req_123456790",
-    "timestamp": "2024-01-20T10:35:00.000Z"
   }
 }
 \`\`\`
 
-**取消收藏响应**
+#### 取消收藏响应
 
 \`\`\`json
 {
   "success": true,
   "data": {
-    "action": "unliked",
     "liked": false,
-    "likesCount": 88,
+    "likesCount": 89,
     "message": "取消收藏成功"
-  },
-  "meta": {
-    "requestId": "req_123456791",
-    "timestamp": "2024-01-20T10:36:00.000Z"
-  }
-}
-\`\`\`
-
-**错误响应**
-
-\`\`\`json
-// 401 - 未认证
-{
-  "success": false,
-  "error": {
-    "code": "UNAUTHORIZED",
-    "message": "请先登录后再进行此操作"
-  }
-}
-
-// 404 - 宠物不存在
-{
-  "success": false,
-  "error": {
-    "code": "PET_NOT_FOUND",
-    "message": "指定的宠物不存在"
   }
 }
 \`\`\`
 
 ---
 
-### 3. 增加宠物浏览量
+### 3. 记录宠物浏览量
 
 **POST** `/api/pets/:id/view`
 
-记录用户浏览宠物详情页面的行为，用于统计和推荐算法。
+记录用户浏览宠物详情的行为，用于统计和推荐算法。
 
-#### 请求参数
+#### 路径参数
 
-**路径参数**
-
-| 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
 | id | string | 是 | 宠物的唯一标识符 |
 
-**请求体**
+#### 请求体
 
 \`\`\`json
 {
-  "source": "direct",
-  "referrer": "https://petlove.com/pets",
-  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-  "sessionId": "sess_123456789"
+  "userId": "64f1a2b3c4d5e6f7g8h9i0j2",
+  "sessionId": "sess_123456789",
+  "referrer": "search",
+  "userAgent": "Mozilla/5.0...",
+  "timestamp": "2024-01-20T10:30:00.000Z"
 }
 \`\`\`
 
-| 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
-| source | string | 否 | 访问来源：direct, search, recommendation, social |
-| referrer | string | 否 | 来源页面URL |
-| userAgent | string | 否 | 用户代理字符串 |
-| sessionId | string | 否 | 会话标识符 |
+#### 请求参数说明
 
-#### 请求示例
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| userId | string | 否 | 用户ID（未登录用户可为空） |
+| sessionId | string | 是 | 会话ID |
+| referrer | string | 否 | 来源页面类型 |
+| userAgent | string | 否 | 用户代理信息 |
+| timestamp | string | 是 | 访问时间戳 |
 
-\`\`\`bash
-POST /api/pets/64f1a2b3c4d5e6f7g8h9i0j1/view
-Content-Type: application/json
-
-{
-  "source": "search",
-  "referrer": "https://petlove.com/pets?type=狗狗",
-  "sessionId": "sess_123456789"
-}
-\`\`\`
-
-#### 响应数据
-
-**成功响应 (200)**
+#### 响应示例
 
 \`\`\`json
 {
   "success": true,
   "data": {
-    "viewsCount": 1257,
-    "message": "浏览记录已更新"
-  },
-  "meta": {
-    "requestId": "req_123456792",
-    "timestamp": "2024-01-20T10:37:00.000Z"
+    "viewRecorded": true,
+    "totalViews": 1257,
+    "todayViews": 46
   }
 }
 \`\`\`
@@ -414,33 +294,38 @@ Content-Type: application/json
 
 **GET** `/api/pets/:id/related`
 
-根据当前宠物的特征，推荐相似或相关的其他宠物。
+根据当前宠物信息推荐相似或相关的宠物。
 
-#### 请求参数
+#### 路径参数
 
-**路径参数**
-
-| 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
 | id | string | 是 | 当前宠物的唯一标识符 |
 
-**查询参数**
+#### 查询参数
 
-| 参数名 | 类型 | 必填 | 默认值 | 说明 |
-|--------|------|------|--------|------|
-| limit | number | 否 | 6 | 返回的推荐宠物数量，最大20 |
-| algorithm | string | 否 | similarity | 推荐算法：similarity, location, type, random |
-| excludeAdopted | boolean | 否 | true | 是否排除已被领养的宠物 |
+| 参数 | 类型 | 必填 | 说明 | 默认值 |
+|------|------|------|------|--------|
+| limit | number | 否 | 返回数量限制 | 6 |
+| type | string | 否 | 推荐类型 | similar |
+| exclude_adopted | boolean | 否 | 是否排除已领养 | true |
+
+#### 推荐类型说明
+
+| 类型 | 说明 |
+|------|------|
+| similar | 相似宠物（同品种、同类型） |
+| same_location | 同地区宠物 |
+| user_preference | 基于用户偏好 |
+| popular | 热门宠物 |
 
 #### 请求示例
 
 \`\`\`bash
-GET /api/pets/64f1a2b3c4d5e6f7g8h9i0j1/related?limit=4&algorithm=similarity
+GET /api/pets/64f1a2b3c4d5e6f7g8h9i0j1/related?limit=6&type=similar
 \`\`\`
 
-#### 响应数据
-
-**成功响应 (200)**
+#### 响应示例
 
 \`\`\`json
 {
@@ -448,152 +333,141 @@ GET /api/pets/64f1a2b3c4d5e6f7g8h9i0j1/related?limit=4&algorithm=similarity
   "data": {
     "relatedPets": [
       {
-        "id": "64f1a2b3c4d5e6f7g8h9i0j2",
-        "name": "小黑",
+        "id": "64f1a2b3c4d5e6f7g8h9i0j4",
+        "name": "小黄",
         "type": "狗狗",
-        "breed": "拉布拉多",
+        "breed": "金毛",
         "age": "1岁",
         "gender": "母",
-        "location": "北京",
-        "image": {
-          "url": "https://example.com/pets/pet2-thumb.jpg",
-          "alt": "小黑的照片"
+        "location": "北京市海淀区",
+        "primaryImage": {
+          "url": "https://example.com/pets/xiaohuang_1.jpg",
+          "alt": "小黄照片"
         },
         "adoptionInfo": {
           "fee": 400,
           "status": "available"
         },
-        "personality": ["活泼", "聪明", "友善"],
-        "similarity": 0.85,
-        "reason": "同为大型犬，性格相似"
+        "similarity": 0.95,
+        "reason": "同品种，年龄相近"
       },
       {
-        "id": "64f1a2b3c4d5e6f7g8h9i0j3",
-        "name": "大黄",
-        "type": "狗狗",
+        "id": "64f1a2b3c4d5e6f7g8h9i0j5",
+        "name": "大金",
+        "type": "狗狗", 
         "breed": "金毛",
         "age": "3岁",
         "gender": "公",
-        "location": "北京",
-        "image": {
-          "url": "https://example.com/pets/pet3-thumb.jpg",
-          "alt": "大黄的照片"
+        "location": "北京市朝阳区",
+        "primaryImage": {
+          "url": "https://example.com/pets/dajin_1.jpg",
+          "alt": "大金照片"
         },
         "adoptionInfo": {
           "fee": 600,
           "status": "available"
         },
-        "personality": ["温顺", "忠诚", "聪明"],
-        "similarity": 0.92,
-        "reason": "同品种，年龄相近"
+        "similarity": 0.88,
+        "reason": "同品种，同地区"
       }
     ],
-    "algorithm": "similarity",
-    "total": 2
-  },
-  "meta": {
-    "requestId": "req_123456793",
-    "timestamp": "2024-01-20T10:38:00.000Z"
+    "recommendationMeta": {
+      "algorithm": "collaborative_filtering",
+      "confidence": 0.92,
+      "totalCandidates": 45,
+      "filterCriteria": ["same_breed", "available_status", "location_proximity"]
+    }
   }
 }
 \`\`\`
 
 ---
 
-### 5. 分享宠物信息
+### 5. 生成分享链接
 
 **POST** `/api/pets/:id/share`
 
-记录用户分享宠物信息的行为，并生成分享链接。
+生成宠物分享链接，支持多种分享平台。
 
-#### 请求参数
+#### 路径参数
 
-**路径参数**
-
-| 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
 | id | string | 是 | 宠物的唯一标识符 |
 
-**请求体**
+#### 请求体
 
 \`\`\`json
 {
   "platform": "wechat",
-  "message": "快来看看这只可爱的小白！",
-  "includeContact": true
+  "userId": "64f1a2b3c4d5e6f7g8h9i0j2",
+  "customMessage": "快来看看这只可爱的小白！"
 }
 \`\`\`
 
-| 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
-| platform | string | 是 | 分享平台：wechat, weibo, qq, link, email |
-| message | string | 否 | 自定义分享消息 |
-| includeContact | boolean | 否 | 是否包含联系方式 |
+#### 请求参数说明
 
-#### 请求示例
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| platform | string | 是 | 分享平台 |
+| userId | string | 否 | 分享用户ID |
+| customMessage | string | 否 | 自定义分享消息 |
 
-\`\`\`bash
-POST /api/pets/64f1a2b3c4d5e6f7g8h9i0j1/share
-Content-Type: application/json
+#### 支持的分享平台
 
-{
-  "platform": "wechat",
-  "message": "这只金毛太可爱了，有没有人想领养？",
-  "includeContact": true
-}
-\`\`\`
+| 平台 | 值 | 说明 |
+|------|-----|------|
+| 微信 | wechat | 微信分享 |
+| 微博 | weibo | 微博分享 |
+| QQ | qq | QQ分享 |
+| 链接 | link | 通用链接 |
 
-#### 响应数据
-
-**成功响应 (200)**
+#### 响应示例
 
 \`\`\`json
 {
   "success": true,
   "data": {
-    "shareUrl": "https://petlove.com/pets/64f1a2b3c4d5e6f7g8h9i0j1?ref=share_abc123",
-    "shareId": "share_abc123",
+    "shareUrl": "https://petlove.com/pets/64f1a2b3c4d5e6f7g8h9i0j1?ref=share_wechat_64f1a2b3c4d5e6f7g8h9i0j2",
+    "shortUrl": "https://petlove.com/s/abc123",
+    "qrCode": "https://api.qrserver.com/v1/create-qr-code/?data=https://petlove.com/s/abc123",
     "shareContent": {
-      "title": "领养小白 - 2岁金毛犬",
-      "description": "小白是一只非常温顺友好的金毛犬，特别喜欢和小朋友玩耍...",
-      "image": "https://example.com/pets/pet1-share.jpg",
-      "url": "https://petlove.com/pets/64f1a2b3c4d5e6f7g8h9i0j1?ref=share_abc123"
+      "title": "领养小白 - 2岁金毛等待新家",
+      "description": "温顺友好的金毛犬，特别喜欢和小朋友玩耍...",
+      "image": "https://example.com/pets/xiaobai_share.jpg",
+      "customMessage": "快来看看这只可爱的小白！"
     },
-    "qrCode": "https://api.petlove.com/qr/share_abc123.png",
-    "expiresAt": "2024-02-20T10:39:00.000Z",
-    "sharesCount": 24,
-    "message": "分享链接生成成功"
-  },
-  "meta": {
-    "requestId": "req_123456794",
-    "timestamp": "2024-01-20T10:39:00.000Z"
+    "platformSpecific": {
+      "wechat": {
+        "miniProgramPath": "pages/pet-detail/index?id=64f1a2b3c4d5e6f7g8h9i0j1"
+      }
+    },
+    "expiresAt": "2024-02-20T10:30:00.000Z"
   }
 }
 \`\`\`
 
 ---
 
-### 6. 获取宠物申请状态
+### 6. 检查用户领养申请状态
 
 **GET** `/api/pets/:id/adoption-status`
 
 🔒 **需要用户认证**
 
-获取当前用户对指定宠物的领养申请状态。
+检查当前用户对指定宠物的领养申请状态。
 
-#### 请求参数
+#### 路径参数
 
-**路径参数**
-
-| 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
 | id | string | 是 | 宠物的唯一标识符 |
 
-**请求头**
+#### 请求头
 
-| 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
-| Authorization | string | 是 | Bearer token格式的用户认证令牌 |
+\`\`\`
+Authorization: Bearer <jwt_token>
+\`\`\`
 
 #### 请求示例
 
@@ -602,9 +476,7 @@ GET /api/pets/64f1a2b3c4d5e6f7g8h9i0j1/adoption-status
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 \`\`\`
 
-#### 响应数据
-
-**成功响应 (200) - 有申请记录**
+#### 响应示例（有申请）
 
 \`\`\`json
 {
@@ -612,58 +484,21 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
   "data": {
     "hasApplication": true,
     "application": {
-      "id": "64f1a2b3c4d5e6f7g8h9i0j5",
+      "id": "64f1a2b3c4d5e6f7g8h9i0j6",
       "status": "under_review",
       "statusText": "审核中",
       "submittedAt": "2024-01-18T14:30:00.000Z",
       "lastUpdated": "2024-01-19T09:15:00.000Z",
-      "currentStep": 2,
-      "totalSteps": 5,
-      "steps": [
-        {
-          "step": 1,
-          "name": "提交申请",
-          "status": "completed",
-          "completedAt": "2024-01-18T14:30:00.000Z"
-        },
-        {
-          "step": 2,
-          "name": "初步审核",
-          "status": "in_progress",
-          "estimatedCompletion": "2024-01-22T00:00:00.000Z"
-        },
-        {
-          "step": 3,
-          "name": "家访安排",
-          "status": "pending"
-        },
-        {
-          "step": 4,
-          "name": "最终审核",
-          "status": "pending"
-        },
-        {
-          "step": 5,
-          "name": "领养确认",
-          "status": "pending"
-        }
-      ],
-      "nextAction": {
-        "type": "wait",
-        "message": "请耐心等待审核结果，我们会在2-3个工作日内联系您"
-      },
+      "nextStep": "等待工作人员联系安排家访",
+      "estimatedResponseTime": "3-5个工作日",
       "canModify": false,
       "canCancel": true
     }
-  },
-  "meta": {
-    "requestId": "req_123456795",
-    "timestamp": "2024-01-20T10:40:00.000Z"
   }
 }
 \`\`\`
 
-**成功响应 (200) - 无申请记录**
+#### 响应示例（无申请）
 
 \`\`\`json
 {
@@ -672,16 +507,11 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
     "hasApplication": false,
     "canApply": true,
     "requirements": [
-      "年满18周岁",
+      "年满18岁",
       "有固定住所",
-      "有稳定收入来源",
-      "同意接受家访"
-    ],
-    "estimatedProcessTime": "7-14天"
-  },
-  "meta": {
-    "requestId": "req_123456796",
-    "timestamp": "2024-01-20T10:41:00.000Z"
+      "有稳定收入",
+      "同意家访"
+    ]
   }
 }
 \`\`\`
@@ -694,93 +524,48 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
 🔒 **需要用户认证**
 
-用户举报宠物信息存在问题或违规内容。
+举报不当的宠物信息。
 
-#### 请求参数
+#### 路径参数
 
-**路径参数**
-
-| 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
 | id | string | 是 | 宠物的唯一标识符 |
 
-**请求头**
-
-| 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
-| Authorization | string | 是 | Bearer token格式的用户认证令牌 |
-
-**请求体**
+#### 请求体
 
 \`\`\`json
 {
-  "reason": "misleading_info",
-  "category": "信息不实",
-  "description": "宠物的年龄和实际不符，图片也不是同一只宠物",
+  "reason": "false_information",
+  "description": "宠物信息与实际不符，疑似虚假信息",
   "evidence": [
     "https://example.com/evidence1.jpg",
     "https://example.com/evidence2.jpg"
-  ],
-  "contactInfo": {
-    "phone": "13800138000",
-    "email": "reporter@example.com"
-  }
-}
-\`\`\`
-
-| 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
-| reason | string | 是 | 举报原因代码 |
-| category | string | 是 | 举报分类 |
-| description | string | 是 | 详细描述 |
-| evidence | array | 否 | 证据图片URL数组 |
-| contactInfo | object | 否 | 举报人联系方式 |
-
-**举报原因代码**
-
-| 代码 | 说明 |
-|------|------|
-| misleading_info | 信息不实 |
-| fake_photos | 虚假图片 |
-| already_adopted | 已被领养但未更新 |
-| inappropriate_content | 不当内容 |
-| spam | 垃圾信息 |
-| other | 其他原因 |
-
-#### 请求示例
-
-\`\`\`bash
-POST /api/pets/64f1a2b3c4d5e6f7g8h9i0j1/report
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-Content-Type: application/json
-
-{
-  "reason": "misleading_info",
-  "category": "信息不实",
-  "description": "宠物的年龄和实际不符，图片也不是同一只宠物",
-  "evidence": [
-    "https://example.com/evidence1.jpg"
   ]
 }
 \`\`\`
 
-#### 响应数据
+#### 举报原因类型
 
-**成功响应 (201)**
+| 类型 | 说明 |
+|------|------|
+| false_information | 虚假信息 |
+| inappropriate_content | 不当内容 |
+| spam | 垃圾信息 |
+| fraud | 诈骗行为 |
+| animal_abuse | 动物虐待 |
+| other | 其他原因 |
+
+#### 响应示例
 
 \`\`\`json
 {
   "success": true,
   "data": {
-    "reportId": "report_123456789",
+    "reportId": "64f1a2b3c4d5e6f7g8h9i0j7",
     "status": "submitted",
     "message": "举报已提交，我们会在24小时内处理",
-    "trackingNumber": "RPT20240120001",
-    "estimatedProcessTime": "1-3个工作日"
-  },
-  "meta": {
-    "requestId": "req_123456797",
-    "timestamp": "2024-01-20T10:42:00.000Z"
+    "referenceNumber": "RPT-2024-0120-001"
   }
 }
 \`\`\`
@@ -793,46 +578,117 @@ Content-Type: application/json
 
 \`\`\`typescript
 // hooks/usePetDetail.ts
-import { useState, useEffect } from 'react'
-import { useAuth } from './useAuth'
+import { useState, useEffect } from 'react';
+import { useAuth } from './useAuth';
 
-interface PetDetailData {
-  pet: Pet
-  userInteraction: UserInteraction
-  relatedPets: Pet[]
+interface PetDetailHook {
+  pet: Pet | null;
+  loading: boolean;
+  error: string | null;
+  isLiked: boolean;
+  likesCount: number;
+  relatedPets: Pet[];
+  adoptionStatus: AdoptionStatus | null;
+  toggleLike: () => Promise<void>;
+  recordView: () => Promise<void>;
+  generateShareLink: (platform: string) => Promise<ShareLink>;
+  reportPet: (reason: string, description: string) => Promise<void>;
 }
 
-export const usePetDetail = (petId: string) => {
-  const [data, setData] = useState<PetDetailData | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const { token } = useAuth()
+export const usePetDetail = (petId: string): PetDetailHook => {
+  const { user, token } = useAuth();
+  const [pet, setPet] = useState<Pet | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isLiked, setIsLiked] = useState(false);
+  const [likesCount, setLikesCount] = useState(0);
+  const [relatedPets, setRelatedPets] = useState<Pet[]>([]);
+  const [adoptionStatus, setAdoptionStatus] = useState<AdoptionStatus | null>(null);
 
   // 获取宠物详情
   const fetchPetDetail = async () => {
     try {
-      setLoading(true)
-      const response = await fetch(`/api/pets/${petId}?include=all`, {
+      setLoading(true);
+      const response = await fetch(`/api/pets/${petId}?include_stats=true&user_id=${user?.id || ''}`, {
         headers: {
           'Authorization': token ? `Bearer ${token}` : '',
-        }
-      })
-      
-      const result = await response.json()
-      
-      if (result.success) {
-        setData(result.data)
-        // 记录浏览行为
-        recordView()
-      } else {
-        setError(result.error.message)
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('获取宠物信息失败');
+      }
+
+      const data = await response.json();
+      setPet(data.data.pet);
+      setIsLiked(data.data.pet.isLikedByUser);
+      setLikesCount(data.data.pet.likes);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '未知错误');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 获取相关推荐
+  const fetchRelatedPets = async () => {
+    try {
+      const response = await fetch(`/api/pets/${petId}/related?limit=6`);
+      if (response.ok) {
+        const data = await response.json();
+        setRelatedPets(data.data.relatedPets);
       }
     } catch (err) {
-      setError('获取宠物信息失败')
-    } finally {
-      setLoading(false)
+      console.error('获取相关推荐失败:', err);
     }
-  }
+  };
+
+  // 获取领养申请状态
+  const fetchAdoptionStatus = async () => {
+    if (!user || !token) return;
+
+    try {
+      const response = await fetch(`/api/pets/${petId}/adoption-status`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setAdoptionStatus(data.data);
+      }
+    } catch (err) {
+      console.error('获取申请状态失败:', err);
+    }
+  };
+
+  // 切换收藏状态
+  const toggleLike = async () => {
+    if (!user || !token) {
+      throw new Error('请先登录');
+    }
+
+    try {
+      const response = await fetch(`/api/pets/${petId}/like`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('操作失败');
+      }
+
+      const data = await response.json();
+      setIsLiked(data.data.liked);
+      setLikesCount(data.data.likesCount);
+    } catch (err) {
+      throw err;
+    }
+  };
 
   // 记录浏览
   const recordView = async () => {
@@ -843,59 +699,19 @@ export const usePetDetail = (petId: string) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          source: 'direct',
+          userId: user?.id,
+          sessionId: sessionStorage.getItem('sessionId'),
           referrer: document.referrer,
-          sessionId: getSessionId()
-        })
-      })
+          timestamp: new Date().toISOString(),
+        }),
+      });
     } catch (err) {
-      console.warn('记录浏览失败:', err)
+      console.error('记录浏览失败:', err);
     }
-  }
+  };
 
-  // 收藏/取消收藏
-  const toggleLike = async () => {
-    if (!token) {
-      throw new Error('请先登录')
-    }
-
-    try {
-      const response = await fetch(`/api/pets/${petId}/like`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        }
-      })
-      
-      const result = await response.json()
-      
-      if (result.success) {
-        setData(prev => prev ? {
-          ...prev,
-          pet: {
-            ...prev.pet,
-            stats: {
-              ...prev.pet.stats,
-              likes: result.data.likesCount
-            }
-          },
-          userInteraction: {
-            ...prev.userInteraction,
-            isLiked: result.data.liked
-          }
-        } : null)
-        
-        return result.data
-      } else {
-        throw new Error(result.error.message)
-      }
-    } catch (err) {
-      throw err
-    }
-  }
-
-  // 分享
-  const sharePet = async (platform: string, message?: string) => {
+  // 生成分享链接
+  const generateShareLink = async (platform: string): Promise<ShareLink> => {
     try {
       const response = await fetch(`/api/pets/${petId}/share`, {
         method: 'POST',
@@ -904,57 +720,25 @@ export const usePetDetail = (petId: string) => {
         },
         body: JSON.stringify({
           platform,
-          message,
-          includeContact: true
-        })
-      })
-      
-      const result = await response.json()
-      
-      if (result.success) {
-        setData(prev => prev ? {
-          ...prev,
-          pet: {
-            ...prev.pet,
-            stats: {
-              ...prev.pet.stats,
-              shares: prev.pet.stats.shares + 1
-            }
-          }
-        } : null)
-        
-        return result.data
-      } else {
-        throw new Error(result.error.message)
+          userId: user?.id,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('生成分享链接失败');
       }
+
+      const data = await response.json();
+      return data.data;
     } catch (err) {
-      throw err
+      throw err;
     }
-  }
+  };
 
-  // 获取申请状态
-  const getAdoptionStatus = async () => {
-    if (!token) return null
-
-    try {
-      const response = await fetch(`/api/pets/${petId}/adoption-status`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        }
-      })
-      
-      const result = await response.json()
-      return result.success ? result.data : null
-    } catch (err) {
-      console.warn('获取申请状态失败:', err)
-      return null
-    }
-  }
-
-  // 举报
-  const reportPet = async (reportData: ReportData) => {
-    if (!token) {
-      throw new Error('请先登录')
+  // 举报宠物
+  const reportPet = async (reason: string, description: string) => {
+    if (!user || !token) {
+      throw new Error('请先登录');
     }
 
     try {
@@ -964,279 +748,163 @@ export const usePetDetail = (petId: string) => {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(reportData)
-      })
-      
-      const result = await response.json()
-      
-      if (result.success) {
-        return result.data
-      } else {
-        throw new Error(result.error.message)
+        body: JSON.stringify({
+          reason,
+          description,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('举报提交失败');
       }
     } catch (err) {
-      throw err
+      throw err;
     }
-  }
+  };
 
   useEffect(() => {
     if (petId) {
-      fetchPetDetail()
+      fetchPetDetail();
+      fetchRelatedPets();
+      recordView();
+      
+      if (user) {
+        fetchAdoptionStatus();
+      }
     }
-  }, [petId])
+  }, [petId, user]);
 
   return {
-    data,
+    pet,
     loading,
     error,
-    actions: {
-      toggleLike,
-      sharePet,
-      getAdoptionStatus,
-      reportPet,
-      refresh: fetchPetDetail
-    }
-  }
-}
-
-// 辅助函数
-const getSessionId = () => {
-  let sessionId = sessionStorage.getItem('sessionId')
-  if (!sessionId) {
-    sessionId = `sess_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-    sessionStorage.setItem('sessionId', sessionId)
-  }
-  return sessionId
-}
+    isLiked,
+    likesCount,
+    relatedPets,
+    adoptionStatus,
+    toggleLike,
+    recordView,
+    generateShareLink,
+    reportPet,
+  };
+};
 \`\`\`
 
 ### 组件使用示例
 
-\`\`\`typescript
+\`\`\`tsx
 // components/PetDetailPage.tsx
-import React, { useState } from 'react'
-import { usePetDetail } from '../hooks/usePetDetail'
-import { Button } from '@/components/ui/button'
-import { Heart, Share2, Flag } from 'lucide-react'
+import React from 'react';
+import { usePetDetail } from '../hooks/usePetDetail';
+import { Button } from '@/components/ui/button';
+import { Heart, Share, Flag } from 'lucide-react';
 
 interface PetDetailPageProps {
-  petId: string
+  petId: string;
 }
 
 export const PetDetailPage: React.FC<PetDetailPageProps> = ({ petId }) => {
-  const { data, loading, error, actions } = usePetDetail(petId)
-  const [likeLoading, setLikeLoading] = useState(false)
-  const [shareLoading, setShareLoading] = useState(false)
+  const {
+    pet,
+    loading,
+    error,
+    isLiked,
+    likesCount,
+    relatedPets,
+    adoptionStatus,
+    toggleLike,
+    generateShareLink,
+    reportPet,
+  } = usePetDetail(petId);
 
   const handleLike = async () => {
     try {
-      setLikeLoading(true)
-      const result = await actions.toggleLike()
-      // 显示成功消息
-      console.log(result.message)
+      await toggleLike();
     } catch (err) {
-      // 显示错误消息
-      console.error(err)
-    } finally {
-      setLikeLoading(false)
+      alert(err instanceof Error ? err.message : '操作失败');
     }
-  }
+  };
 
   const handleShare = async (platform: string) => {
     try {
-      setShareLoading(true)
-      const result = await actions.sharePet(platform, '快来看看这只可爱的宠物！')
-      
-      // 复制分享链接到剪贴板
-      await navigator.clipboard.writeText(result.shareUrl)
-      console.log('分享链接已复制到剪贴板')
+      const shareLink = await generateShareLink(platform);
+      // 处理分享逻辑
+      navigator.clipboard.writeText(shareLink.shareUrl);
+      alert('分享链接已复制到剪贴板');
     } catch (err) {
-      console.error('分享失败:', err)
-    } finally {
-      setShareLoading(false)
+      alert('生成分享链接失败');
     }
-  }
+  };
 
-  if (loading) return <div>加载中...</div>
-  if (error) return <div>错误: {error}</div>
-  if (!data) return <div>未找到宠物信息</div>
+  const handleReport = async () => {
+    const reason = prompt('请选择举报原因');
+    const description = prompt('请描述具体问题');
+    
+    if (reason && description) {
+      try {
+        await reportPet(reason, description);
+        alert('举报已提交');
+      } catch (err) {
+        alert('举报提交失败');
+      }
+    }
+  };
 
-  const { pet, userInteraction } = data
+  if (loading) return <div>加载中...</div>;
+  if (error) return <div>错误: {error}</div>;
+  if (!pet) return <div>宠物不存在</div>;
 
   return (
     <div className="pet-detail-page">
       {/* 宠物基本信息 */}
-      <div className="pet-header">
+      <div className="pet-info">
         <h1>{pet.name}</h1>
-        <div className="pet-stats">
-          <span>浏览 {pet.stats.views}</span>
-          <span>收藏 {pet.stats.likes}</span>
-          <span>分享 {pet.stats.shares}</span>
-        </div>
+        <p>{pet.breed} • {pet.age} • {pet.gender}</p>
+        <p>{pet.description}</p>
       </div>
 
       {/* 操作按钮 */}
-      <div className="action-buttons">
-        <Button
-          onClick={handleLike}
-          disabled={likeLoading}
-          variant={userInteraction.isLiked ? "default" : "outline"}
-        >
-          <Heart className={`h-4 w-4 mr-2 ${userInteraction.isLiked ? 'fill-current' : ''}`} />
-          {userInteraction.isLiked ? '已收藏' : '收藏'}
+      <div className="actions">
+        <Button onClick={handleLike} variant={isLiked ? "default" : "outline"}>
+          <Heart className={isLiked ? "fill-current" : ""} />
+          {isLiked ? '已收藏' : '收藏'} ({likesCount})
         </Button>
-
-        <Button
-          onClick={() => handleShare('link')}
-          disabled={shareLoading}
-          variant="outline"
-        >
-          <Share2 className="h-4 w-4 mr-2" />
+        
+        <Button onClick={() => handleShare('link')} variant="outline">
+          <Share />
           分享
         </Button>
-
-        <Button
-          onClick={() => {/* 打开举报对话框 */}}
-          variant="ghost"
-          size="sm"
-        >
-          <Flag className="h-4 w-4 mr-2" />
+        
+        <Button onClick={handleReport} variant="outline" size="sm">
+          <Flag />
           举报
         </Button>
       </div>
 
-      {/* 宠物详细信息 */}
-      <div className="pet-content">
-        {/* 图片画廊 */}
-        <div className="pet-gallery">
-          <img src={pet.images.primary.url || "/placeholder.svg"} alt={pet.images.primary.alt} />
-          <div className="gallery-thumbnails">
-            {pet.images.gallery.map((img, index) => (
-              <img key={index} src={img.thumbnail || "/placeholder.svg"} alt={img.alt} />
-            ))}
-          </div>
+      {/* 领养状态 */}
+      {adoptionStatus?.hasApplication && (
+        <div className="adoption-status">
+          <p>申请状态: {adoptionStatus.application.statusText}</p>
+          <p>{adoptionStatus.application.nextStep}</p>
         </div>
+      )}
 
-        {/* 基本信息 */}
-        <div className="pet-info">
-          <h2>基本信息</h2>
-          <div className="info-grid">
-            <div>品种: {pet.breed}</div>
-            <div>年龄: {pet.age}</div>
-            <div>性别: {pet.gender}</div>
-            <div>体重: {pet.weight}</div>
-            <div>位置: {pet.location}</div>
-          </div>
+      {/* 相关推荐 */}
+      <div className="related-pets">
+        <h3>相关推荐</h3>
+        <div className="pets-grid">
+          {relatedPets.map(relatedPet => (
+            <div key={relatedPet.id} className="pet-card">
+              <img src={relatedPet.primaryImage.url || "/placeholder.svg"} alt={relatedPet.name} />
+              <h4>{relatedPet.name}</h4>
+              <p>{relatedPet.breed} • {relatedPet.age}</p>
+            </div>
+          ))}
         </div>
-
-        {/* 性格特点 */}
-        <div className="pet-personality">
-          <h2>性格特点</h2>
-          <div className="personality-tags">
-            {pet.personality.map((trait, index) => (
-              <span key={index} className="tag">{trait}</span>
-            ))}
-          </div>
-        </div>
-
-        {/* 详细描述 */}
-        <div className="pet-description">
-          <h2>详细介绍</h2>
-          <p>{pet.description}</p>
-        </div>
-
-        {/* 医疗信息 */}
-        <div className="pet-medical">
-          <h2>健康状况</h2>
-          <div className="medical-status">
-            <div className={`status-item ${pet.medicalInfo.vaccinated ? 'positive' : 'negative'}`}>
-              疫苗接种: {pet.medicalInfo.vaccinated ? '已完成' : '未完成'}
-            </div>
-            <div className={`status-item ${pet.medicalInfo.neutered ? 'positive' : 'negative'}`}>
-              绝育状态: {pet.medicalInfo.neutered ? '已绝育' : '未绝育'}
-            </div>
-            <div className={`status-item ${pet.medicalInfo.microchipped ? 'positive' : 'negative'}`}>
-              芯片植入: {pet.medicalInfo.microchipped ? '已植入' : '未植入'}
-            </div>
-          </div>
-          {pet.medicalInfo.medicalHistory && (
-            <div className="medical-history">
-              <h3>医疗记录</h3>
-              <p>{pet.medicalInfo.medicalHistory}</p>
-            </div>
-          )}
-        </div>
-
-        {/* 领养信息 */}
-        <div className="adoption-info">
-          <h2>领养信息</h2>
-          <div className="adoption-fee">
-            领养费用: ¥{pet.adoptionInfo.fee}
-          </div>
-          <div className="ideal-family">
-            <h3>理想家庭</h3>
-            <p>{pet.adoptionInfo.idealFamily}</p>
-          </div>
-          <div className="requirements">
-            <h3>领养要求</h3>
-            <ul>
-              {pet.adoptionInfo.requirements.map((req, index) => (
-                <li key={index}>{req}</li>
-              ))}
-            </ul>
-          </div>
-        </div>
-
-        {/* 救助故事 */}
-        {pet.rescueInfo && (
-          <div className="rescue-story">
-            <h2>救助故事</h2>
-            <p>{pet.rescueInfo.rescueStory}</p>
-            <div className="rescue-details">
-              <div>救助时间: {new Date(pet.rescueInfo.rescueDate).toLocaleDateString()}</div>
-              <div>救助地点: {pet.rescueInfo.rescueLocation}</div>
-              {pet.rescueInfo.rescuer && (
-                <div>救助人: {pet.rescueInfo.rescuer.name}</div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* 联系信息 */}
-        <div className="contact-info">
-          <h2>联系我们</h2>
-          <div className="contact-details">
-            <div>机构: {pet.contact.organization}</div>
-            <div>电话: {pet.contact.phone}</div>
-            <div>邮箱: {pet.contact.email}</div>
-            <div>地址: {pet.contact.address}</div>
-            <div>工作时间: 
-              工作日 {pet.contact.workingHours.weekdays}，
-              周末 {pet.contact.workingHours.weekends}
-            </div>
-          </div>
-        </div>
-
-        {/* 相关推荐 */}
-        {data.relatedPets.length > 0 && (
-          <div className="related-pets">
-            <h2>相关推荐</h2>
-            <div className="pets-grid">
-              {data.relatedPets.map(relatedPet => (
-                <div key={relatedPet.id} className="pet-card">
-                  <img src={relatedPet.image || "/placeholder.svg"} alt={relatedPet.name} />
-                  <h3>{relatedPet.name}</h3>
-                  <p>{relatedPet.breed} • {relatedPet.age}</p>
-                  <p>¥{relatedPet.adoptionFee}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     </div>
-  )
-}
+  );
+};
 \`\`\`
 
 ---
@@ -1247,135 +915,152 @@ export const PetDetailPage: React.FC<PetDetailPageProps> = ({ petId }) => {
 
 | 错误码 | HTTP状态码 | 说明 | 处理建议 |
 |--------|------------|------|----------|
-| PET_NOT_FOUND | 404 | 宠物不存在 | 显示404页面或重定向到宠物列表 |
-| UNAUTHORIZED | 401 | 用户未认证 | 重定向到登录页面 |
+| PET_NOT_FOUND | 404 | 宠物不存在 | 跳转到404页面或宠物列表 |
+| UNAUTHORIZED | 401 | 用户未认证 | 跳转到登录页面 |
 | FORBIDDEN | 403 | 权限不足 | 显示权限不足提示 |
-| VALIDATION_ERROR | 422 | 请求参数验证失败 | 显示具体的验证错误信息 |
-| RATE_LIMIT_EXCEEDED | 429 | 请求频率超限 | 显示请求过于频繁的提示 |
-| SERVER_ERROR | 500 | 服务器内部错误 | 显示通用错误页面，建议重试 |
+| RATE_LIMITED | 429 | 请求频率超限 | 显示稍后重试提示 |
+| VALIDATION_ERROR | 422 | 参数验证失败 | 显示具体验证错误信息 |
+| SERVER_ERROR | 500 | 服务器内部错误 | 显示通用错误提示 |
 
 ### 错误处理最佳实践
 
 \`\`\`typescript
 // utils/errorHandler.ts
-export const handleApiError = (error: any, response?: Response) => {
-  if (response) {
-    switch (response.status) {
+export const handleApiError = (error: any, context: string) => {
+  console.error(`${context} error:`, error);
+
+  if (error.response) {
+    const { status, data } = error.response;
+    
+    switch (status) {
       case 404:
-        return {
-          type: 'not_found',
-          message: '宠物信息不存在',
-          action: 'redirect_to_list'
+        if (data.error?.code === 'PET_NOT_FOUND') {
+          return '抱歉，您查看的宠物信息不存在或已被删除';
         }
+        return '请求的资源不存在';
+        
       case 401:
-        return {
-          type: 'unauthorized',
-          message: '请先登录后再进行此操作',
-          action: 'redirect_to_login'
-        }
+        return '请先登录后再进行此操作';
+        
       case 403:
-        return {
-          type: 'forbidden',
-          message: '您没有权限执行此操作',
-          action: 'show_message'
-        }
+        return '您没有权限执行此操作';
+        
       case 429:
-        return {
-          type: 'rate_limit',
-          message: '操作过于频繁，请稍后再试',
-          action: 'show_message'
-        }
+        return '请求过于频繁，请稍后再试';
+        
+      case 422:
+        return data.error?.message || '提交的数据格式不正确';
+        
+      case 500:
+        return '服务器暂时出现问题，请稍后重试';
+        
       default:
-        return {
-          type: 'server_error',
-          message: '服务器暂时无法响应，请稍后重试',
-          action: 'show_retry'
-        }
+        return data.error?.message || '操作失败，请重试';
     }
   }
   
-  return {
-    type: 'network_error',
-    message: '网络连接失败，请检查网络设置',
-    action: 'show_retry'
+  if (error.request) {
+    return '网络连接失败，请检查网络设置';
   }
-}
+  
+  return '发生未知错误，请重试';
+};
 \`\`\`
 
 ---
 
 ## 性能优化建议
 
-### 1. 数据缓存
+### 1. 缓存策略
 
 \`\`\`typescript
 // utils/cache.ts
 class PetDetailCache {
-  private cache = new Map<string, { data: any, timestamp: number }>()
-  private readonly TTL = 5 * 60 * 1000 // 5分钟
+  private cache = new Map<string, { data: any; timestamp: number }>();
+  private readonly TTL = 5 * 60 * 1000; // 5分钟
 
-  get(petId: string) {
-    const cached = this.cache.get(petId)
-    if (cached && Date.now() - cached.timestamp < this.TTL) {
-      return cached.data
+  get(key: string) {
+    const item = this.cache.get(key);
+    if (!item) return null;
+    
+    if (Date.now() - item.timestamp > this.TTL) {
+      this.cache.delete(key);
+      return null;
     }
-    return null
+    
+    return item.data;
   }
 
-  set(petId: string, data: any) {
-    this.cache.set(petId, {
+  set(key: string, data: any) {
+    this.cache.set(key, {
       data,
-      timestamp: Date.now()
-    })
+      timestamp: Date.now(),
+    });
   }
 
-  clear(petId?: string) {
-    if (petId) {
-      this.cache.delete(petId)
-    } else {
-      this.cache.clear()
-    }
+  clear() {
+    this.cache.clear();
   }
 }
 
-export const petDetailCache = new PetDetailCache()
+export const petDetailCache = new PetDetailCache();
 \`\`\`
 
 ### 2. 图片懒加载
 
-\`\`\`typescript
-// hooks/useImageLazyLoad.ts
-import { useState, useEffect, useRef } from 'react'
+\`\`\`tsx
+// components/LazyImage.tsx
+import React, { useState, useRef, useEffect } from 'react';
 
-export const useImageLazyLoad = (src: string, placeholder?: string) => {
-  const [imageSrc, setImageSrc] = useState(placeholder || '')
-  const [isLoaded, setIsLoaded] = useState(false)
-  const imgRef = useRef<HTMLImageElement>(null)
+interface LazyImageProps {
+  src: string;
+  alt: string;
+  className?: string;
+  placeholder?: string;
+}
+
+export const LazyImage: React.FC<LazyImageProps> = ({
+  src,
+  alt,
+  className,
+  placeholder = '/placeholder.svg?height=300&width=300'
+}) => {
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [isInView, setIsInView] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          setImageSrc(src)
-          observer.disconnect()
+          setIsInView(true);
+          observer.disconnect();
         }
       },
       { threshold: 0.1 }
-    )
+    );
 
     if (imgRef.current) {
-      observer.observe(imgRef.current)
+      observer.observe(imgRef.current);
     }
 
-    return () => observer.disconnect()
-  }, [src])
+    return () => observer.disconnect();
+  }, []);
 
-  const handleLoad = () => {
-    setIsLoaded(true)
-  }
-
-  return { imageSrc, isLoaded, imgRef, handleLoad }
-}
+  return (
+    <img
+      ref={imgRef}
+      src={isInView ? src : placeholder}
+      alt={alt}
+      className={className}
+      onLoad={() => setIsLoaded(true)}
+      style={{
+        opacity: isLoaded ? 1 : 0.7,
+        transition: 'opacity 0.3s ease',
+      }}
+    />
+  );
+};
 \`\`\`
 
 ### 3. 请求去重
@@ -1383,145 +1068,103 @@ export const useImageLazyLoad = (src: string, placeholder?: string) => {
 \`\`\`typescript
 // utils/requestDeduplication.ts
 class RequestDeduplicator {
-  private pendingRequests = new Map<string, Promise<any>>()
+  private pendingRequests = new Map<string, Promise<any>>();
 
   async request<T>(key: string, requestFn: () => Promise<T>): Promise<T> {
     if (this.pendingRequests.has(key)) {
-      return this.pendingRequests.get(key)!
+      return this.pendingRequests.get(key) as Promise<T>;
     }
 
     const promise = requestFn().finally(() => {
-      this.pendingRequests.delete(key)
-    })
+      this.pendingRequests.delete(key);
+    });
 
-    this.pendingRequests.set(key, promise)
-    return promise
+    this.pendingRequests.set(key, promise);
+    return promise;
   }
 }
 
-export const requestDeduplicator = new RequestDeduplicator()
+export const requestDeduplicator = new RequestDeduplicator();
 \`\`\`
 
 ---
 
 ## 测试用例
 
-### API接口测试
+### 单元测试示例
 
 \`\`\`typescript
-// tests/petDetail.test.ts
-import { describe, it, expect, beforeEach, jest } from '@jest/globals'
-import { usePetDetail } from '../hooks/usePetDetail'
-import { renderHook, waitFor } from '@testing-library/react'
+// __tests__/usePetDetail.test.ts
+import { renderHook, act } from '@testing-library/react';
+import { usePetDetail } from '../hooks/usePetDetail';
 
 // Mock fetch
-global.fetch = jest.fn()
+global.fetch = jest.fn();
 
-describe('Pet Detail API', () => {
+describe('usePetDetail', () => {
   beforeEach(() => {
-    jest.clearAllMocks()
-  })
+    (fetch as jest.Mock).mockClear();
+  });
 
-  describe('fetchPetDetail', () => {
-    it('should fetch pet detail successfully', async () => {
-      const mockPetData = {
+  it('should fetch pet detail on mount', async () => {
+    const mockPet = {
+      id: '123',
+      name: '小白',
+      type: '狗狗',
+      breed: '金毛',
+    };
+
+    (fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
         success: true,
-        data: {
-          pet: {
-            id: '123',
-            name: '小白',
-            type: '狗狗',
-            breed: '金毛'
-          }
-        }
-      }
+        data: { pet: mockPet }
+      }),
+    });
 
-      ;(fetch as jest.MockedFunction<typeof fetch>).mockResolvedValueOnce({
+    const { result } = renderHook(() => usePetDetail('123'));
+
+    expect(result.current.loading).toBe(true);
+
+    await act(async () => {
+      await new Promise(resolve => setTimeout(resolve, 0));
+    });
+
+    expect(result.current.loading).toBe(false);
+    expect(result.current.pet).toEqual(mockPet);
+  });
+
+  it('should handle like toggle', async () => {
+    (fetch as jest.Mock)
+      .mockResolvedValueOnce({
         ok: true,
-        json: async () => mockPetData
-      } as Response)
-
-      const { result } = renderHook(() => usePetDetail('123'))
-
-      await waitFor(() => {
-        expect(result.current.loading).toBe(false)
+        json: async () => ({
+          success: true,
+          data: { pet: { id: '123', name: '小白', isLikedByUser: false, likes: 10 } }
+        }),
       })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          success: true,
+          data: { liked: true, likesCount: 11 }
+        }),
+      });
 
-      expect(result.current.data?.pet.name).toBe('小白')
-      expect(fetch).toHaveBeenCalledWith('/api/pets/123?include=all', {
-        headers: {
-          'Authorization': ''
-        }
-      })
-    })
+    const { result } = renderHook(() => usePetDetail('123'));
 
-    it('should handle pet not found error', async () => {
-      const mockError = {
-        success: false,
-        error: {
-          code: 'PET_NOT_FOUND',
-          message: '指定的宠物不存在'
-        }
-      }
+    await act(async () => {
+      await new Promise(resolve => setTimeout(resolve, 0));
+    });
 
-      ;(fetch as jest.MockedFunction<typeof fetch>).mockResolvedValueOnce({
-        ok: false,
-        status: 404,
-        json: async () => mockError
-      } as Response)
+    await act(async () => {
+      await result.current.toggleLike();
+    });
 
-      const { result } = renderHook(() => usePetDetail('999'))
-
-      await waitFor(() => {
-        expect(result.current.loading).toBe(false)
-      })
-
-      expect(result.current.error).toBe('指定的宠物不存在')
-      expect(result.current.data).toBeNull()
-    })
-  })
-
-  describe('toggleLike', () => {
-    it('should toggle like successfully', async () => {
-      const mockLikeResponse = {
-        success: true,
-        data: {
-          action: 'liked',
-          liked: true,
-          likesCount: 90,
-          message: '收藏成功'
-        }
-      }
-
-      ;(fetch as jest.MockedFunction<typeof fetch>)
-        .mockResolvedValueOnce({
-          ok: true,
-          json: async () => ({ success: true, data: { pet: { id: '123' } } })
-        } as Response)
-        .mockResolvedValueOnce({
-          ok: true,
-          json: async () => mockLikeResponse
-        } as Response)
-
-      const { result } = renderHook(() => usePetDetail('123'))
-
-      await waitFor(() => {
-        expect(result.current.loading).toBe(false)
-      })
-
-      const likeResult = await result.current.actions.toggleLike()
-
-      expect(likeResult.liked).toBe(true)
-      expect(likeResult.likesCount).toBe(90)
-      expect(fetch).toHaveBeenCalledWith('/api/pets/123/like', {
-        method: 'POST',
-        headers: {
-          'Authorization': 'Bearer undefined'
-        }
-      })
-    })
-  })
-})
+    expect(result.current.isLiked).toBe(true);
+    expect(result.current.likesCount).toBe(11);
+  });
+});
 \`\`\`
 
 ---
@@ -1532,137 +1175,79 @@ describe('Pet Detail API', () => {
 
 \`\`\`typescript
 // utils/performance.ts
-export class PerformanceMonitor {
-  private static instance: PerformanceMonitor
-  private metrics: Map<string, number[]> = new Map()
-
-  static getInstance() {
-    if (!this.instance) {
-      this.instance = new PerformanceMonitor()
-    }
-    return this.instance
-  }
-
-  startTiming(key: string) {
-    performance.mark(`${key}-start`)
-  }
-
-  endTiming(key: string) {
-    performance.mark(`${key}-end`)
-    performance.measure(key, `${key}-start`, `${key}-end`)
+export const trackPagePerformance = (petId: string) => {
+  // 页面加载时间
+  window.addEventListener('load', () => {
+    const loadTime = performance.now();
     
-    const measure = performance.getEntriesByName(key)[0]
-    const duration = measure.duration
+    // 发送性能数据
+    fetch('/api/analytics/performance', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        page: 'pet-detail',
+        petId,
+        loadTime,
+        timestamp: Date.now(),
+      }),
+    }).catch(console.error);
+  });
+};
 
-    if (!this.metrics.has(key)) {
-      this.metrics.set(key, [])
-    }
-    this.metrics.get(key)!.push(duration)
-
-    // 发送到监控服务
-    this.sendMetric(key, duration)
-  }
-
-  private sendMetric(key: string, duration: number) {
-    // 发送性能数据到监控服务
-    if (typeof window !== 'undefined' && window.gtag) {
-      window.gtag('event', 'timing_complete', {
-        name: key,
-        value: Math.round(duration)
-      })
-    }
-  }
-
-  getAverageTime(key: string): number {
-    const times = this.metrics.get(key) || []
-    return times.length > 0 ? times.reduce((a, b) => a + b, 0) / times.length : 0
-  }
-}
-
-export const performanceMonitor = PerformanceMonitor.getInstance()
+export const trackUserInteraction = (action: string, petId: string, metadata?: any) => {
+  fetch('/api/analytics/interaction', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      action,
+      petId,
+      metadata,
+      timestamp: Date.now(),
+    }),
+  }).catch(console.error);
+};
 \`\`\`
 
 ### 错误日志
 
 \`\`\`typescript
-// utils/logger.ts
-export class Logger {
-  private static instance: Logger
-  private logs: Array<{ level: string, message: string, timestamp: Date, context?: any }> = []
+// utils/errorLogger.ts
+export const logError = (error: Error, context: string, metadata?: any) => {
+  const errorData = {
+    message: error.message,
+    stack: error.stack,
+    context,
+    metadata,
+    userAgent: navigator.userAgent,
+    url: window.location.href,
+    timestamp: Date.now(),
+  };
 
-  static getInstance() {
-    if (!this.instance) {
-      this.instance = new Logger()
-    }
-    return this.instance
+  // 发送到日志服务
+  fetch('/api/logs/error', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(errorData),
+  }).catch(console.error);
+
+  // 开发环境下也输出到控制台
+  if (process.env.NODE_ENV === 'development') {
+    console.error('Error logged:', errorData);
   }
-
-  error(message: string, context?: any) {
-    this.log('error', message, context)
-    
-    // 发送错误到监控服务
-    if (typeof window !== 'undefined') {
-      this.sendToErrorService('error', message, context)
-    }
-  }
-
-  warn(message: string, context?: any) {
-    this.log('warn', message, context)
-  }
-
-  info(message: string, context?: any) {
-    this.log('info', message, context)
-  }
-
-  private log(level: string, message: string, context?: any) {
-    const logEntry = {
-      level,
-      message,
-      timestamp: new Date(),
-      context
-    }
-    
-    this.logs.push(logEntry)
-    console[level as keyof Console](message, context)
-    
-    // 保持最近1000条日志
-    if (this.logs.length > 1000) {
-      this.logs.shift()
-    }
-  }
-
-  private sendToErrorService(level: string, message: string, context?: any) {
-    // 发送到错误监控服务（如 Sentry）
-    fetch('/api/logs', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        level,
-        message,
-        context,
-        timestamp: new Date().toISOString(),
-        url: window.location.href,
-        userAgent: navigator.userAgent
-      })
-    }).catch(err => {
-      console.error('Failed to send log to server:', err)
-    })
-  }
-
-  getLogs(level?: string) {
-    return level 
-      ? this.logs.filter(log => log.level === level)
-      : this.logs
-  }
-}
-
-export const logger = Logger.getInstance()
+};
 \`\`\`
 
 ---
 
-*最后更新时间: 2024-01-20*  
-*文档版本: v1.0*  
-*对应页面: `/pets/[id]` (宠物详情页)*
+## 总结
+
+本文档详细描述了宠物详情页面所需的所有API接口，包括：
+
+1. **核心功能接口** - 宠物详情获取、收藏、浏览统计等
+2. **用户交互接口** - 分享、举报、申请状态查询等  
+3. **推荐系统接口** - 相关宠物推荐算法
+4. **完整的前端集成方案** - React Hook和组件示例
+5. **性能优化策略** - 缓存、懒加载、请求去重等
+6. **测试和监控方案** - 单元测试和性能监控
+
+这些接口设计遵循RESTful规范，提供了完整的错误处理机制，并考虑了性能优化和用户体验。开发者可以直接使用这些接口规范进行前端开发。
