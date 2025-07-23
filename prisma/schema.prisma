@@ -10,92 +10,88 @@ datasource db {
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
-  name      String
+  name      String?
   phone     String?
-  avatar    String?
-  role      UserRole @default(USER)
-  city      String?
   address   String?
+  avatar    String?
+  role      Role     @default(USER)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Relations
-  adoptionApplications AdoptionApplication[]
-  bookings            Booking[]
-  blogPosts           BlogPost[]
-  comments            Comment[]
-  likes               Like[]
-  favorites           Favorite[]
-  volunteerApplication VolunteerApplication?
-  donations           Donation[]
+  adoptions   Adoption[]
+  bookings    Booking[]
+  blogPosts   BlogPost[]
+  volunteers  Volunteer[]
+  donations   Donation[]
+  favorites   Favorite[]
 
   @@map("users")
 }
 
 model Pet {
-  id          String    @id @default(cuid())
+  id          String     @id @default(cuid())
   name        String
-  type        PetType
+  species     Species
   breed       String
-  age         String
-  gender      PetGender
-  weight      String?
-  color       String?
-  description String    @db.Text
+  age         Int
+  gender      Gender
+  size        Size
+  color       String
+  description String     @db.Text
+  images      String     @db.Text // JSON array of image URLs
   location    String
-  status      PetStatus @default(AVAILABLE)
-  images      String    @db.Text // JSON array of image URLs
-  vaccinated  Boolean   @default(false)
-  neutered    Boolean   @default(false)
-  microchipped Boolean  @default(false)
-  rescueStory String?   @db.Text
-  careNeeds   String?   @db.Text
-  personality String?   @db.Text
-  arrivalDate DateTime  @default(now())
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  status      PetStatus  @default(AVAILABLE)
+  isVaccinated Boolean   @default(false)
+  isNeutered  Boolean    @default(false)
+  healthInfo  String?    @db.Text
+  personality String?    @db.Text
+  requirements String?   @db.Text
+  rescueDate  DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
 
   // Relations
-  adoptionApplications AdoptionApplication[]
-  likes               Like[]
-  favorites           Favorite[]
+  adoptions Adoption[]
+  favorites Favorite[]
 
   @@map("pets")
 }
 
-model AdoptionApplication {
-  id                String            @id @default(cuid())
-  userId            String
-  petId             String
-  status            ApplicationStatus @default(PENDING)
-  personalInfo      String            @db.Text // JSON
-  livingSituation   String            @db.Text // JSON
-  petExperience     String            @db.Text // JSON
-  lifestyle         String            @db.Text // JSON
-  motivation        String            @db.Text // JSON
-  agreements        String            @db.Text // JSON
-  adminNotes        String?           @db.Text
-  reviewedAt        DateTime?
-  createdAt         DateTime          @default(now())
-  updatedAt         DateTime          @updatedAt
+model Adoption {
+  id          String          @id @default(cuid())
+  userId      String
+  petId       String
+  status      AdoptionStatus  @default(PENDING)
+  reason      String          @db.Text
+  experience  String?         @db.Text
+  livingSpace String?
+  hasOtherPets Boolean        @default(false)
+  workSchedule String?
+  references  String?         @db.Text
+  notes       String?         @db.Text
+  submittedAt DateTime        @default(now())
+  reviewedAt  DateTime?
+  approvedAt  DateTime?
+  rejectedAt  DateTime?
+  completedAt DateTime?
 
   // Relations
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   pet  Pet  @relation(fields: [petId], references: [id], onDelete: Cascade)
 
-  @@map("adoption_applications")
+  @@map("adoptions")
 }
 
 model Service {
-  id          String  @id @default(cuid())
+  id          String   @id @default(cuid())
   name        String
-  description String  @db.Text
-  price       String
-  duration    String
+  description String   @db.Text
+  price       Decimal  @db.Decimal(10, 2)
+  duration    Int      // in minutes
   category    String
-  features    String  @db.Text // JSON array
+  isActive    Boolean  @default(true)
   image       String?
-  active      Boolean @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -106,19 +102,16 @@ model Service {
 }
 
 model Booking {
-  id             String        @id @default(cuid())
-  userId         String
-  serviceId      String
-  status         BookingStatus @default(PENDING)
-  date           DateTime
-  time           String
-  serviceType    String        @default("in-store") // in-store, home-visit
-  petInfo        String        @db.Text // JSON
-  contactInfo    String        @db.Text // JSON
-  specialRequests String?      @db.Text
-  totalAmount    Decimal       @db.Decimal(10, 2)
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  id          String        @id @default(cuid())
+  userId      String
+  serviceId   String
+  date        DateTime
+  time        String
+  status      BookingStatus @default(PENDING)
+  notes       String?       @db.Text
+  totalPrice  Decimal       @db.Decimal(10, 2)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 
   // Relations
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -128,62 +121,62 @@ model Booking {
 }
 
 model BlogPost {
-  id          String   @id @default(cuid())
+  id          String      @id @default(cuid())
   title       String
-  content     String   @db.LongText
-  excerpt     String   @db.Text
+  slug        String      @unique
+  content     String      @db.LongText
+  excerpt     String?     @db.Text
   image       String?
-  category    String
-  tags        String   @db.Text // JSON array
-  published   Boolean  @default(false)
-  views       Int      @default(0)
-  readTime    String
+  status      PostStatus  @default(DRAFT)
   authorId    String
+  tags        String?     @db.Text // JSON array
+  views       Int         @default(0)
+  likes       Int         @default(0)
   publishedAt DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
 
   // Relations
-  author   User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  comments Comment[]
-  likes    Like[]
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
 
   @@map("blog_posts")
 }
 
-model Comment {
-  id        String   @id @default(cuid())
-  content   String   @db.Text
-  authorId  String
-  postId    String
-  parentId  String?  // For nested comments
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model Volunteer {
+  id          String           @id @default(cuid())
+  userId      String
+  skills      String           @db.Text // JSON array
+  availability String          @db.Text // JSON object
+  experience  String?          @db.Text
+  motivation  String           @db.Text
+  status      VolunteerStatus  @default(PENDING)
+  appliedAt   DateTime         @default(now())
+  approvedAt  DateTime?
+  rejectedAt  DateTime?
 
   // Relations
-  author User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  post   BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
-  parent Comment? @relation("CommentReplies", fields: [parentId], references: [id])
-  replies Comment[] @relation("CommentReplies")
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@map("comments")
+  @@map("volunteers")
 }
 
-model Like {
-  id     String    @id @default(cuid())
-  userId String
-  petId  String?
-  postId String?
-  createdAt DateTime @default(now())
+model Donation {
+  id          String        @id @default(cuid())
+  userId      String?
+  amount      Decimal       @db.Decimal(10, 2)
+  currency    String        @default("USD")
+  type        DonationType  @default(ONE_TIME)
+  status      PaymentStatus @default(PENDING)
+  paymentId   String?       @unique
+  message     String?       @db.Text
+  isAnonymous Boolean       @default(false)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 
   // Relations
-  user User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  pet  Pet?      @relation(fields: [petId], references: [id], onDelete: Cascade)
-  post BlogPost? @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
-  @@unique([userId, petId])
-  @@unique([userId, postId])
-  @@map("likes")
+  @@map("donations")
 }
 
 model Favorite {
@@ -200,83 +193,50 @@ model Favorite {
   @@map("favorites")
 }
 
-model VolunteerApplication {
-  id                  String            @id @default(cuid())
-  userId              String            @unique
-  status              ApplicationStatus @default(PENDING)
-  availableTime       String            @db.Text // JSON array
-  preferredActivities String            @db.Text // JSON array
-  experience          String?           @db.Text
-  skills              String?           @db.Text
-  motivation          String            @db.Text
-  emergencyContact    String            @db.Text // JSON
-  hasTransport        Boolean           @default(false)
-  canTravel           Boolean           @default(false)
-  adminNotes          String?           @db.Text
-  reviewedAt          DateTime?
-  createdAt           DateTime          @default(now())
-  updatedAt           DateTime          @updatedAt
-
-  // Relations
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("volunteer_applications")
-}
-
-model Donation {
-  id            String        @id @default(cuid())
-  userId        String?
-  amount        Decimal       @db.Decimal(10, 2)
-  type          DonationType  @default(ONE_TIME)
-  project       String
-  paymentMethod String
-  status        PaymentStatus @default(PENDING)
-  isAnonymous   Boolean       @default(false)
-  message       String?       @db.Text
-  transactionId String?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-
-  // Relations
-  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
-
-  @@map("donations")
-}
-
 // Enums
-enum UserRole {
+enum Role {
   USER
   ADMIN
   VOLUNTEER
 }
 
-enum PetType {
+enum Species {
   DOG
   CAT
   RABBIT
   BIRD
   HAMSTER
+  GUINEA_PIG
   OTHER
 }
 
-enum PetGender {
+enum Gender {
   MALE
   FEMALE
+  UNKNOWN
+}
+
+enum Size {
+  SMALL
+  MEDIUM
+  LARGE
+  EXTRA_LARGE
 }
 
 enum PetStatus {
   AVAILABLE
   PENDING
   ADOPTED
-  MEDICAL_CARE
-  NOT_AVAILABLE
+  UNAVAILABLE
 }
 
-enum ApplicationStatus {
+enum AdoptionStatus {
   PENDING
+  UNDER_REVIEW
   APPROVED
   REJECTED
-  UNDER_REVIEW
+  COMPLETED
+  CANCELLED
 }
 
 enum BookingStatus {
@@ -286,9 +246,24 @@ enum BookingStatus {
   CANCELLED
 }
 
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum VolunteerStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  ACTIVE
+  INACTIVE
+}
+
 enum DonationType {
   ONE_TIME
   MONTHLY
+  YEARLY
 }
 
 enum PaymentStatus {

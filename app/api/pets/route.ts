@@ -1,19 +1,34 @@
 import type { NextRequest } from "next/server"
 import { prisma } from "@/lib/db"
-import { createApiResponse, createApiError, getPaginationParams } from "@/lib/api-utils"
+import { handleError, createSuccessResponse, getSearchParams } from "@/lib/api-utils"
+import { z } from "zod"
+
+const searchSchema = z.object({
+  search: z.string().optional(),
+  species: z.string().optional(),
+  gender: z.string().optional(),
+  size: z.string().optional(),
+  location: z.string().optional(),
+  status: z.string().optional(),
+  page: z
+    .string()
+    .optional()
+    .transform((val) => (val ? Number.parseInt(val) : 1)),
+  limit: z
+    .string()
+    .optional()
+    .transform((val) => (val ? Number.parseInt(val) : 12)),
+})
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    const { page, limit, skip } = getPaginationParams(searchParams)
+    const params = await getSearchParams(request)
+    const { search, species, gender, size, location, status, page, limit } = searchSchema.parse(params)
 
-    // 构建查询条件
-    const where: any = {
-      status: "AVAILABLE",
-    }
+    const skip = (page - 1) * limit
 
-    // 搜索关键词
-    const search = searchParams.get("search")
+    const where: any = {}
+
     if (search) {
       where.OR = [
         { name: { contains: search, mode: "insensitive" } },
@@ -22,47 +37,23 @@ export async function GET(request: NextRequest) {
       ]
     }
 
-    // 类型筛选
-    const type = searchParams.get("type")
-    if (type && type !== "all") {
-      where.type = type.toUpperCase()
-    }
-
-    // 性别筛选
-    const gender = searchParams.get("gender")
-    if (gender && gender !== "all") {
-      where.gender = gender.toUpperCase()
-    }
-
-    // 年龄筛选
-    const ageRange = searchParams.get("age")
-    if (ageRange && ageRange !== "all") {
-      // 这里可以根据年龄范围进行筛选
-      // 例如: young (0-1), adult (1-7), senior (7+)
-    }
-
-    // 城市筛选
-    const city = searchParams.get("city")
-    if (city) {
-      where.location = { contains: city, mode: "insensitive" }
-    }
-
-    // 排序
-    const sortBy = searchParams.get("sortBy") || "createdAt"
-    const sortOrder = searchParams.get("sortOrder") || "desc"
+    if (species) where.species = species
+    if (gender) where.gender = gender
+    if (size) where.size = size
+    if (location) where.location = { contains: location, mode: "insensitive" }
+    if (status) where.status = status
 
     const [pets, total] = await Promise.all([
       prisma.pet.findMany({
         where,
         skip,
         take: limit,
-        orderBy: { [sortBy]: sortOrder },
+        orderBy: { createdAt: "desc" },
         include: {
           _count: {
             select: {
-              likes: true,
+              adoptions: true,
               favorites: true,
-              adoptionApplications: true,
             },
           },
         },
@@ -70,60 +61,56 @@ export async function GET(request: NextRequest) {
       prisma.pet.count({ where }),
     ])
 
-    // 处理图片数据
-    const petsWithImages = pets.map((pet) => ({
-      ...pet,
-      images: JSON.parse(pet.images || "[]"),
-      likeCount: pet._count.likes,
-      favoriteCount: pet._count.favorites,
-      applicationCount: pet._count.adoptionApplications,
-    }))
+    const totalPages = Math.ceil(total / limit)
 
-    return createApiResponse({
-      pets: petsWithImages,
+    return createSuccessResponse({
+      pets,
       pagination: {
         page,
         limit,
         total,
-        totalPages: Math.ceil(total / limit),
-        hasNext: page * limit < total,
+        totalPages,
+        hasNext: page < totalPages,
         hasPrev: page > 1,
       },
     })
   } catch (error) {
-    console.error("Error fetching pets:", error)
-    return createApiError("Failed to fetch pets", 500)
+    return handleError(error)
   }
 }
+
+const createPetSchema = z.object({
+  name: z.string().min(1),
+  species: z.enum(["DOG", "CAT", "RABBIT", "BIRD", "HAMSTER", "GUINEA_PIG", "OTHER"]),
+  breed: z.string().min(1),
+  age: z.number().min(0),
+  gender: z.enum(["MALE", "FEMALE", "UNKNOWN"]),
+  size: z.enum(["SMALL", "MEDIUM", "LARGE", "EXTRA_LARGE"]),
+  color: z.string().min(1),
+  description: z.string().min(10),
+  images: z.array(z.string().url()),
+  location: z.string().min(1),
+  isVaccinated: z.boolean().optional(),
+  isNeutered: z.boolean().optional(),
+  healthInfo: z.string().optional(),
+  personality: z.string().optional(),
+  requirements: z.string().optional(),
+})
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
+    const data = createPetSchema.parse(body)
 
     const pet = await prisma.pet.create({
       data: {
-        name: body.name,
-        type: body.type.toUpperCase(),
-        breed: body.breed,
-        age: body.age,
-        gender: body.gender.toUpperCase(),
-        weight: body.weight,
-        color: body.color,
-        description: body.description,
-        location: body.location,
-        images: JSON.stringify(body.images || []),
-        vaccinated: body.vaccinated || false,
-        neutered: body.neutered || false,
-        microchipped: body.microchipped || false,
-        rescueStory: body.rescueStory,
-        careNeeds: body.careNeeds,
-        personality: body.personality,
+        ...data,
+        images: JSON.stringify(data.images),
       },
     })
 
-    return createApiResponse(pet, 201)
+    return createSuccessResponse(pet, 201)
   } catch (error) {
-    console.error("Error creating pet:", error)
-    return createApiError("Failed to create pet", 500)
+    return handleError(error)
   }
 }
