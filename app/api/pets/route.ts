@@ -1,116 +1,56 @@
 import type { NextRequest } from "next/server"
-import { prisma } from "@/lib/db"
-import { handleError, createSuccessResponse, getSearchParams } from "@/lib/api-utils"
-import { z } from "zod"
-
-const searchSchema = z.object({
-  search: z.string().optional(),
-  species: z.string().optional(),
-  gender: z.string().optional(),
-  size: z.string().optional(),
-  location: z.string().optional(),
-  status: z.string().optional(),
-  page: z
-    .string()
-    .optional()
-    .transform((val) => (val ? Number.parseInt(val) : 1)),
-  limit: z
-    .string()
-    .optional()
-    .transform((val) => (val ? Number.parseInt(val) : 12)),
-})
+import { db } from "@/lib/db"
+import { createApiResponse, createApiError, getPaginationParams } from "@/lib/api-utils"
 
 export async function GET(request: NextRequest) {
   try {
-    const params = await getSearchParams(request)
-    const { search, species, gender, size, location, status, page, limit } = searchSchema.parse(params)
+    const { searchParams } = new URL(request.url)
+    const { page, limit, skip } = getPaginationParams(searchParams)
 
-    const skip = (page - 1) * limit
+    const species = searchParams.get("species")
+    const gender = searchParams.get("gender")
+    const status = searchParams.get("status")
+    const location = searchParams.get("location")
+    const search = searchParams.get("search")
 
     const where: any = {}
-
-    if (search) {
-      where.OR = [
-        { name: { contains: search, mode: "insensitive" } },
-        { breed: { contains: search, mode: "insensitive" } },
-        { description: { contains: search, mode: "insensitive" } },
-      ]
-    }
-
-    if (species) where.species = species
-    if (gender) where.gender = gender
-    if (size) where.size = size
-    if (location) where.location = { contains: location, mode: "insensitive" }
-    if (status) where.status = status
+    if (species) where.species = species.toUpperCase()
+    if (gender) where.gender = gender.toUpperCase()
+    if (status) where.status = status.toUpperCase()
+    if (location) where.location = location
 
     const [pets, total] = await Promise.all([
-      prisma.pet.findMany({
+      db.pet.findMany({
         where,
         skip,
         take: limit,
-        orderBy: { createdAt: "desc" },
-        include: {
-          _count: {
-            select: {
-              adoptions: true,
-              favorites: true,
-            },
-          },
-        },
       }),
-      prisma.pet.count({ where }),
+      db.pet.count(),
     ])
 
-    const totalPages = Math.ceil(total / limit)
+    // Filter by search term if provided
+    let filteredPets = pets
+    if (search) {
+      const searchLower = search.toLowerCase()
+      filteredPets = pets.filter(
+        (pet) =>
+          pet.name.toLowerCase().includes(searchLower) ||
+          pet.breed.toLowerCase().includes(searchLower) ||
+          pet.description.toLowerCase().includes(searchLower),
+      )
+    }
 
-    return createSuccessResponse({
-      pets,
+    return createApiResponse({
+      pets: filteredPets,
       pagination: {
         page,
         limit,
         total,
-        totalPages,
-        hasNext: page < totalPages,
-        hasPrev: page > 1,
+        totalPages: Math.ceil(total / limit),
       },
     })
   } catch (error) {
-    return handleError(error)
-  }
-}
-
-const createPetSchema = z.object({
-  name: z.string().min(1),
-  species: z.enum(["DOG", "CAT", "RABBIT", "BIRD", "HAMSTER", "GUINEA_PIG", "OTHER"]),
-  breed: z.string().min(1),
-  age: z.number().min(0),
-  gender: z.enum(["MALE", "FEMALE", "UNKNOWN"]),
-  size: z.enum(["SMALL", "MEDIUM", "LARGE", "EXTRA_LARGE"]),
-  color: z.string().min(1),
-  description: z.string().min(10),
-  images: z.array(z.string().url()),
-  location: z.string().min(1),
-  isVaccinated: z.boolean().optional(),
-  isNeutered: z.boolean().optional(),
-  healthInfo: z.string().optional(),
-  personality: z.string().optional(),
-  requirements: z.string().optional(),
-})
-
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json()
-    const data = createPetSchema.parse(body)
-
-    const pet = await prisma.pet.create({
-      data: {
-        ...data,
-        images: JSON.stringify(data.images),
-      },
-    })
-
-    return createSuccessResponse(pet, 201)
-  } catch (error) {
-    return handleError(error)
+    console.error("Error fetching pets:", error)
+    return createApiError("Failed to fetch pets", 500)
   }
 }

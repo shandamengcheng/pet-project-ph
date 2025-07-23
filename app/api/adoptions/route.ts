@@ -1,112 +1,35 @@
 import type { NextRequest } from "next/server"
-import { prisma } from "@/lib/db"
-import { createApiResponse, createApiError, validateRequest, getPaginationParams } from "@/lib/api-utils"
+import { createApiResponse, createApiError } from "@/lib/api-utils"
 import { z } from "zod"
 
 const adoptionApplicationSchema = z.object({
   petId: z.string(),
-  personalInfo: z.object({
-    fullName: z.string().min(1),
-    email: z.string().email(),
-    phone: z.string().min(1),
-    age: z.string(),
-    occupation: z.string(),
-  }),
-  livingSituation: z.object({
-    housingType: z.string(),
-    ownRent: z.string(),
-    hasYard: z.string(),
-    landlordPermission: z.boolean().optional(),
-  }),
-  petExperience: z.object({
-    previousPets: z.string(),
-    currentPets: z.string(),
-    petExperience: z.string().optional(),
-  }),
-  lifestyle: z.object({
-    workSchedule: z.string(),
-    exerciseTime: z.string(),
-    travelFrequency: z.string(),
-  }),
-  motivation: z.object({
-    adoptionReason: z.string().min(10),
-    expectations: z.string().min(10),
-  }),
-  agreements: z.array(z.string()),
+  applicantName: z.string().min(1),
+  email: z.string().email(),
+  phone: z.string().min(1),
+  reason: z.string().min(10),
+  experience: z.string().optional(),
+  livingSpace: z.string().optional(),
 })
 
 export async function POST(request: NextRequest) {
-  const { data, error } = await validateRequest(request, adoptionApplicationSchema)
-  if (error) return error
-
   try {
-    // 检查宠物是否存在且可领养
-    const pet = await prisma.pet.findUnique({
-      where: { id: data.petId },
-    })
+    const body = await request.json()
+    const data = adoptionApplicationSchema.parse(body)
 
-    if (!pet) {
-      return createApiError("Pet not found", 404)
+    // Mock successful application creation
+    const application = {
+      id: Math.random().toString(36).substr(2, 9),
+      ...data,
+      status: "PENDING",
+      createdAt: new Date().toISOString(),
     }
-
-    if (pet.status !== "AVAILABLE") {
-      return createApiError("Pet is not available for adoption", 400)
-    }
-
-    // 创建用户（如果不存在）
-    let user = await prisma.user.findUnique({
-      where: { email: data.personalInfo.email },
-    })
-
-    if (!user) {
-      user = await prisma.user.create({
-        data: {
-          email: data.personalInfo.email,
-          name: data.personalInfo.fullName,
-          phone: data.personalInfo.phone,
-        },
-      })
-    }
-
-    // 检查是否已经申请过这只宠物
-    const existingApplication = await prisma.adoptionApplication.findFirst({
-      where: {
-        userId: user.id,
-        petId: data.petId,
-        status: { in: ["PENDING", "UNDER_REVIEW"] },
-      },
-    })
-
-    if (existingApplication) {
-      return createApiError("You have already applied for this pet", 400)
-    }
-
-    // 创建领养申请
-    const application = await prisma.adoptionApplication.create({
-      data: {
-        userId: user.id,
-        petId: data.petId,
-        personalInfo: JSON.stringify(data.personalInfo),
-        livingSituation: JSON.stringify(data.livingSituation),
-        petExperience: JSON.stringify(data.petExperience),
-        lifestyle: JSON.stringify(data.lifestyle),
-        motivation: JSON.stringify(data.motivation),
-        agreements: JSON.stringify(data.agreements),
-      },
-      include: {
-        user: true,
-        pet: true,
-      },
-    })
-
-    // 更新宠物状态为待审核
-    await prisma.pet.update({
-      where: { id: data.petId },
-      data: { status: "PENDING" },
-    })
 
     return createApiResponse(application, 201)
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return createApiError(`Validation error: ${error.errors.map((e) => e.message).join(", ")}`, 400)
+    }
     console.error("Error creating adoption application:", error)
     return createApiError("Failed to create adoption application", 500)
   }
@@ -114,55 +37,27 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    const { page, limit, skip } = getPaginationParams(searchParams)
-
-    const status = searchParams.get("status")
-    const userId = searchParams.get("userId")
-
-    const where: any = {}
-    if (status) where.status = status.toUpperCase()
-    if (userId) where.userId = userId
-
-    const [applications, total] = await Promise.all([
-      prisma.adoptionApplication.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: { createdAt: "desc" },
-        include: {
-          user: {
-            select: { id: true, name: true, email: true, phone: true },
-          },
-          pet: {
-            select: { id: true, name: true, type: true, breed: true, images: true },
-          },
-        },
-      }),
-      prisma.adoptionApplication.count({ where }),
-    ])
-
-    const applicationsWithData = applications.map((app) => ({
-      ...app,
-      personalInfo: JSON.parse(app.personalInfo),
-      livingSituation: JSON.parse(app.livingSituation),
-      petExperience: JSON.parse(app.petExperience),
-      lifestyle: JSON.parse(app.lifestyle),
-      motivation: JSON.parse(app.motivation),
-      agreements: JSON.parse(app.agreements),
-      pet: {
-        ...app.pet,
-        images: JSON.parse(app.pet.images || "[]"),
+    // Mock applications data
+    const applications = [
+      {
+        id: "1",
+        petId: "1",
+        applicantName: "John Doe",
+        email: "john@example.com",
+        phone: "555-0123",
+        reason: "Looking for a loyal companion",
+        status: "PENDING",
+        createdAt: new Date().toISOString(),
       },
-    }))
+    ]
 
     return createApiResponse({
-      applications: applicationsWithData,
+      applications,
       pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
+        page: 1,
+        limit: 10,
+        total: applications.length,
+        totalPages: 1,
       },
     })
   } catch (error) {

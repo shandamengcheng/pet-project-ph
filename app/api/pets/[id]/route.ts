@@ -1,41 +1,20 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/db"
-import { handleError, createSuccessResponse } from "@/lib/api-utils"
+import type { NextRequest } from "next/server"
+import { db } from "@/lib/db"
+import { createApiResponse, createApiError } from "@/lib/api-utils"
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const pet = await prisma.pet.findUnique({
+    const pet = await db.pet.findUnique({
       where: { id: params.id },
-      include: {
-        adoptions: {
-          where: { status: "PENDING" },
-          include: {
-            user: {
-              select: { id: true, name: true, email: true },
-            },
-          },
-        },
-        _count: {
-          select: {
-            adoptions: true,
-            favorites: true,
-          },
-        },
-      },
     })
 
     if (!pet) {
-      return NextResponse.json({ error: "Pet not found" }, { status: 404 })
+      return createApiError("Pet not found", 404)
     }
 
-    // Parse images JSON
-    const petWithImages = {
-      ...pet,
-      images: JSON.parse(pet.images),
-    }
-
-    return createSuccessResponse(petWithImages)
+    return createApiResponse(pet)
   } catch (error) {
-    return handleError(error)
+    console.error("Error fetching pet:", error)
+    return createApiError("Failed to fetch pet", 500)
   }
 }
