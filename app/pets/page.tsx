@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -15,86 +15,42 @@ export default function PetsPage() {
   const [selectedType, setSelectedType] = useState("all")
   const [selectedAge, setSelectedAge] = useState("all")
 
-  const pets = [
-    {
-      id: 1,
-      name: "小白",
-      type: "狗狗",
-      breed: "金毛",
-      age: "2岁",
-      gender: "公",
-      location: "北京",
-      image: "/placeholder.svg?height=300&width=300",
-      description: "温顺友好的金毛，喜欢和小朋友玩耍，已完成疫苗接种",
-      vaccinated: true,
-      neutered: false,
-    },
-    {
-      id: 2,
-      name: "咪咪",
-      type: "猫咪",
-      breed: "英短",
-      age: "1岁",
-      gender: "母",
-      location: "上海",
-      image: "/placeholder.svg?height=300&width=300",
-      description: "安静可爱的英短，适合公寓饲养，性格温和",
-      vaccinated: true,
-      neutered: true,
-    },
-    {
-      id: 3,
-      name: "豆豆",
-      type: "兔子",
-      breed: "垂耳兔",
-      age: "6个月",
-      gender: "公",
-      location: "广州",
-      image: "/placeholder.svg?height=300&width=300",
-      description: "活泼的小兔子，毛色雪白，喜欢吃胡萝卜",
-      vaccinated: true,
-      neutered: false,
-    },
-    {
-      id: 4,
-      name: "大黄",
-      type: "狗狗",
-      breed: "中华田园犬",
-      age: "3岁",
-      gender: "公",
-      location: "深圳",
-      image: "/placeholder.svg?height=300&width=300",
-      description: "忠诚的田园犬，看家护院的好帮手，性格稳重",
-      vaccinated: true,
-      neutered: true,
-    },
-    {
-      id: 5,
-      name: "花花",
-      type: "猫咪",
-      breed: "橘猫",
-      age: "2岁",
-      gender: "母",
-      location: "杭州",
-      image: "/placeholder.svg?height=300&width=300",
-      description: "活泼的橘猫，喜欢晒太阳和玩毛线球",
-      vaccinated: true,
-      neutered: true,
-    },
-    {
-      id: 6,
-      name: "雪球",
-      type: "仓鼠",
-      breed: "金丝熊",
-      age: "3个月",
-      gender: "母",
-      location: "成都",
-      image: "/placeholder.svg?height=300&width=300",
-      description: "可爱的小仓鼠，毛色金黄，喜欢在轮子上跑步",
-      vaccinated: false,
-      neutered: false,
-    },
-  ]
+  const [pets, setPets] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [pagination, setPagination] = useState({
+    page: 1,
+    totalPages: 1,
+    total: 0,
+  })
+
+  useEffect(() => {
+    fetchPets()
+  }, [searchTerm, selectedType, selectedAge, pagination.page])
+
+  const fetchPets = async () => {
+    setLoading(true)
+    try {
+      const params = new URLSearchParams({
+        page: pagination.page.toString(),
+        limit: "12",
+        ...(searchTerm && { search: searchTerm }),
+        ...(selectedType !== "all" && { type: selectedType }),
+        ...(selectedAge !== "all" && { age: selectedAge }),
+      })
+
+      const response = await fetch(`/api/pets?${params}`)
+      const result = await response.json()
+
+      if (result.success) {
+        setPets(result.data.pets)
+        setPagination(result.data.pagination)
+      }
+    } catch (error) {
+      console.error("Error fetching pets:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const filteredPets = pets.filter((pet) => {
     const matchesSearch =
@@ -153,9 +109,9 @@ export default function PetsPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">所有年龄</SelectItem>
-                <SelectItem value="young">幼年 (≤1岁)</SelectItem>
+                <SelectItem value="young">幼年 (&gt;=1岁)</SelectItem>
                 <SelectItem value="adult">成年 (1-5岁)</SelectItem>
-                <SelectItem value="senior">老年 (>5岁)</SelectItem>
+                <SelectItem value="senior">老年 (&gt;5岁)</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -169,65 +125,83 @@ export default function PetsPage() {
         </div>
 
         {/* Pet Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredPets.map((pet) => (
-            <Card key={pet.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-              <div className="relative">
-                <Image
-                  src={pet.image || "/placeholder.svg"}
-                  alt={pet.name}
-                  width={300}
-                  height={300}
-                  className="w-full h-64 object-cover"
-                />
-                <div className="absolute top-4 left-4 flex gap-2">
-                  <Badge className="bg-blue-600">{pet.type}</Badge>
-                  <Badge variant="secondary">{pet.gender}</Badge>
-                </div>
-                <Button size="sm" variant="secondary" className="absolute top-4 right-4">
-                  <Heart className="h-4 w-4" />
-                </Button>
-              </div>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  {pet.name}
-                  <span className="text-sm font-normal text-gray-500">{pet.age}</span>
-                </CardTitle>
-                <CardDescription className="flex items-center gap-2">
-                  <span>{pet.breed}</span>
-                  <span>•</span>
-                  <div className="flex items-center gap-1">
-                    <MapPin className="h-3 w-3" />
-                    {pet.location}
+        {loading ? (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[...Array(6)].map((_, i) => (
+              <Card key={i} className="overflow-hidden">
+                <div className="w-full h-64 bg-gray-200 animate-pulse" />
+                <CardHeader>
+                  <div className="h-4 bg-gray-200 rounded animate-pulse mb-2" />
+                  <div className="h-3 bg-gray-200 rounded animate-pulse w-2/3" />
+                </CardHeader>
+                <CardContent>
+                  <div className="h-3 bg-gray-200 rounded animate-pulse mb-2" />
+                  <div className="h-8 bg-gray-200 rounded animate-pulse" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {filteredPets.map((pet) => (
+              <Card key={pet.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                <div className="relative">
+                  <Image
+                    src={pet.image || "/placeholder.svg"}
+                    alt={pet.name}
+                    width={300}
+                    height={300}
+                    className="w-full h-64 object-cover"
+                  />
+                  <div className="absolute top-4 left-4 flex gap-2">
+                    <Badge className="bg-blue-600">{pet.type}</Badge>
+                    <Badge variant="secondary">{pet.gender}</Badge>
                   </div>
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600 mb-4 line-clamp-2">{pet.description}</p>
-                <div className="flex gap-2 mb-4">
-                  {pet.vaccinated && (
-                    <Badge variant="outline" className="text-green-600 border-green-600">
-                      已疫苗
-                    </Badge>
-                  )}
-                  {pet.neutered && (
-                    <Badge variant="outline" className="text-blue-600 border-blue-600">
-                      已绝育
-                    </Badge>
-                  )}
-                </div>
-                <div className="flex gap-2">
-                  <Button asChild className="flex-1">
-                    <Link href={`/pets/${pet.id}`}>了解更多</Link>
-                  </Button>
-                  <Button variant="outline" asChild>
-                    <Link href={`/adopt/${pet.id}`}>申请领养</Link>
+                  <Button size="sm" variant="secondary" className="absolute top-4 right-4">
+                    <Heart className="h-4 w-4" />
                   </Button>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    {pet.name}
+                    <span className="text-sm font-normal text-gray-500">{pet.age}</span>
+                  </CardTitle>
+                  <CardDescription className="flex items-center gap-2">
+                    <span>{pet.breed}</span>
+                    <span>•</span>
+                    <div className="flex items-center gap-1">
+                      <MapPin className="h-3 w-3" />
+                      {pet.location}
+                    </div>
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-600 mb-4 line-clamp-2">{pet.description}</p>
+                  <div className="flex gap-2 mb-4">
+                    {pet.vaccinated && (
+                      <Badge variant="outline" className="text-green-600 border-green-600">
+                        已疫苗
+                      </Badge>
+                    )}
+                    {pet.neutered && (
+                      <Badge variant="outline" className="text-blue-600 border-blue-600">
+                        已绝育
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button asChild className="flex-1">
+                      <Link href={`/pets/${pet.id}`}>了解更多</Link>
+                    </Button>
+                    <Button variant="outline" asChild>
+                      <Link href={`/adopt/${pet.id}`}>申请领养</Link>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
 
         {/* No Results */}
         {filteredPets.length === 0 && (
@@ -245,6 +219,43 @@ export default function PetsPage() {
               }}
             >
               清除筛选条件
+            </Button>
+          </div>
+        )}
+
+        {/* 分页组件 */}
+        {pagination.totalPages > 1 && (
+          <div className="flex justify-center items-center gap-2 mt-8">
+            <Button
+              variant="outline"
+              onClick={() => setPagination((prev) => ({ ...prev, page: prev.page - 1 }))}
+              disabled={pagination.page === 1}
+            >
+              上一页
+            </Button>
+
+            <div className="flex gap-1">
+              {[...Array(Math.min(5, pagination.totalPages))].map((_, i) => {
+                const pageNum = i + 1
+                return (
+                  <Button
+                    key={pageNum}
+                    variant={pagination.page === pageNum ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setPagination((prev) => ({ ...prev, page: pageNum }))}
+                  >
+                    {pageNum}
+                  </Button>
+                )
+              })}
+            </div>
+
+            <Button
+              variant="outline"
+              onClick={() => setPagination((prev) => ({ ...prev, page: prev.page + 1 }))}
+              disabled={pagination.page === pagination.totalPages}
+            >
+              下一页
             </Button>
           </div>
         )}

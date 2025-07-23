@@ -23,16 +23,16 @@ async function main() {
   console.log("🗑️ Cleared existing data")
 
   // Create admin user
-  const hashedPassword = await bcrypt.hash(process.env.ADMIN_PASSWORD || "admin123456", 12)
-
-  const adminUser = await prisma.user.create({
-    data: {
-      fullName: "系统管理员",
-      email: process.env.ADMIN_EMAIL || "admin@petlove.com",
-      password: hashedPassword,
+  const admin = await prisma.user.upsert({
+    where: { email: "admin@petlove.com" },
+    update: {},
+    create: {
+      email: "admin@petlove.com",
+      name: "管理员",
+      phone: "13800138000",
       role: "ADMIN",
-      emailVerified: true,
-      isActive: true,
+      city: "北京",
+      address: "北京市朝阳区宠物大街123号",
     },
   })
 
@@ -74,13 +74,11 @@ async function main() {
       data: {
         name: "小白",
         type: "DOG",
-        breed: "金毛",
+        breed: "金毛寻回犬",
         age: "2岁",
         gender: "MALE",
         weight: "25kg",
-        size: "LARGE",
         color: "金黄色",
-        location: "北京",
         description:
           "温顺友好的金毛犬，特别喜欢和小朋友玩耍。性格开朗活泼，对人类非常友善。已经完成基础训练，会坐下、握手等基本指令。",
         personality: JSON.stringify(["友善", "活泼", "聪明", "忠诚"]),
@@ -95,7 +93,7 @@ async function main() {
         requirements: JSON.stringify(["有养狗经验", "有固定住所", "有时间陪伴"]),
         rescueStory:
           "小白是从一个繁殖场救助出来的，当时营养不良，经过几个月的悉心照料，现在已经完全恢复健康，变成了一只活泼可爱的狗狗。",
-        createdById: adminUser.id,
+        createdById: admin.id,
         featured: true,
         views: 156,
         images: {
@@ -135,7 +133,7 @@ async function main() {
         adoptionStatus: "AVAILABLE",
         idealFamily: "适合公寓居住的家庭，喜欢安静环境的人",
         requirements: JSON.stringify(["有养猫经验", "室内饲养", "定期体检"]),
-        createdById: adminUser.id,
+        createdById: admin.id,
         featured: false,
         views: 89,
         images: {
@@ -170,7 +168,7 @@ async function main() {
         adoptionStatus: "AVAILABLE",
         idealFamily: "适合有耐心的家庭，需要准备专门的兔笼和兔粮",
         requirements: JSON.stringify(["了解兔子习性", "准备合适环境", "定期清理"]),
-        createdById: adminUser.id,
+        createdById: admin.id,
         featured: false,
         views: 45,
         images: {
@@ -370,7 +368,7 @@ A: 逐步增加独处时间，提供玩具分散注意力，建立离开和回�
 
 养狗是一个长期的承诺，需要耐心、爱心和责任心。希望这份指南能帮助您和您的狗狗建立美好的关系！
         `,
-        authorId: adminUser.id,
+        authorId: admin.id,
         category: "CARE_GUIDE",
         tags: JSON.stringify(["狗狗护理", "新手指南", "宠物选择", "日常护理"]),
         featuredImage: "/placeholder.svg?height=400&width=600&text=养狗指南",
@@ -454,7 +452,7 @@ A: 逐步增加独处时间，提供玩具分散注意力，建立离开和回�
 
 理解猫咪的行为是建立良好关系的基础。每只猫咪都有独特的性格，需要耐心观察和了解。
         `,
-        authorId: adminUser.id,
+        authorId: admin.id,
         category: "TRAINING",
         tags: JSON.stringify(["猫咪行为", "宠物心理", "沟通技巧", "行为训练"]),
         featuredImage: "/placeholder.svg?height=400&width=600&text=猫咪行为",
@@ -566,7 +564,7 @@ A: 逐步增加独处时间，提供玩具分散注意力，建立离开和回�
 
 正确的营养管理是宠物健康长寿的关键。建议定期咨询兽医，制定个性化的营养方案。
         `,
-        authorId: adminUser.id,
+        authorId: admin.id,
         category: "NUTRITION",
         tags: JSON.stringify(["宠物营养", "食物选择", "健康饮食", "营养指南"]),
         featuredImage: "/placeholder.svg?height=400&width=600&text=宠物营养",
@@ -592,7 +590,7 @@ A: 逐步增加独处时间，提供玩具分散注意力，建立离开和回�
         userId: sampleUsers[0].id,
         petName: "小白",
         petType: "狗狗",
-        petBreed: "金毛",
+        petBreed: "金毛寻回犬",
         petAge: "2岁",
         petWeight: "25kg",
         bookingDate: new Date("2024-02-15T10:00:00Z"),
@@ -955,9 +953,10 @@ A: 逐步增加独处时间，提供玩具分散注意力，建立离开和回�
   })
 
   console.log("种子数据创建完成！")
-  console.log(`创建了 ${petsNew.count} 只宠物`)
-  console.log(`创建了 ${servicesNew.count} 个服务项目`)
-  console.log(`创建了 ${blogPostsNew.count} 篇博客文章`)
+  console.log(`创建了 ${sampleUsers.length + 2} 个用户`)
+  console.log(`创建了 ${samplePets.length + petsNew.count} 只宠物`)
+  console.log(`创建了 ${sampleServices.length + servicesNew.count} 个服务项目`)
+  console.log(`创建了 ${sampleBlogPosts.length + blogPostsNew.count} 篇博客文章`)
 }
 
 main()

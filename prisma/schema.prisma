@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,29 +8,26 @@ datasource db {
 }
 
 model User {
-  id          String   @id @default(cuid())
-  email       String   @unique
-  username    String   @unique
-  password    String
-  name        String?
-  avatar      String?
-  phone       String?
-  address     String?
-  role        UserRole @default(USER)
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  phone     String?
+  avatar    String?
+  role      UserRole @default(USER)
+  city      String?
+  address   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  adoptions        Adoption[]
-  bookings         Booking[]
-  blogPosts        BlogPost[]
-  comments         Comment[]
-  likes            Like[]
-  favorites        Favorite[]
-  volunteerApps    VolunteerApplication[]
-  donations        Donation[]
-  notifications    Notification[]
+  adoptionApplications AdoptionApplication[]
+  bookings            Booking[]
+  blogPosts           BlogPost[]
+  comments            Comment[]
+  likes               Like[]
+  favorites           Favorite[]
+  volunteerApplication VolunteerApplication?
+  donations           Donation[]
 
   @@map("users")
 }
@@ -41,104 +35,118 @@ model User {
 model Pet {
   id          String    @id @default(cuid())
   name        String
-  species     String    // 物种：狗、猫等
-  breed       String?   // 品种
-  age         Int?      // 年龄（月）
-  gender      Gender
-  size        PetSize
+  type        PetType
+  breed       String
+  age         String
+  gender      PetGender
+  weight      String?
   color       String?
-  description String?   @db.Text
-  healthInfo  String?   @db.Text
-  personality String?   @db.Text
-  images      String?   @db.Text // JSON array of image URLs
+  description String    @db.Text
+  location    String
   status      PetStatus @default(AVAILABLE)
-  location    String?
-  rescueDate  DateTime?
-  isActive    Boolean   @default(true)
+  images      String    @db.Text // JSON array of image URLs
+  vaccinated  Boolean   @default(false)
+  neutered    Boolean   @default(false)
+  microchipped Boolean  @default(false)
+  rescueStory String?   @db.Text
+  careNeeds   String?   @db.Text
+  personality String?   @db.Text
+  arrivalDate DateTime  @default(now())
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
   // Relations
-  adoptions   Adoption[]
-  likes       Like[]
-  favorites   Favorite[]
+  adoptionApplications AdoptionApplication[]
+  likes               Like[]
+  favorites           Favorite[]
 
   @@map("pets")
 }
 
-model Adoption {
-  id          String          @id @default(cuid())
-  userId      String
-  petId       String
-  status      AdoptionStatus  @default(PENDING)
-  reason      String?         @db.Text
-  experience  String?         @db.Text
-  livingSpace String?
-  hasOtherPets Boolean?
-  adminNotes  String?         @db.Text
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
+model AdoptionApplication {
+  id                String            @id @default(cuid())
+  userId            String
+  petId             String
+  status            ApplicationStatus @default(PENDING)
+  personalInfo      String            @db.Text // JSON
+  livingSituation   String            @db.Text // JSON
+  petExperience     String            @db.Text // JSON
+  lifestyle         String            @db.Text // JSON
+  motivation        String            @db.Text // JSON
+  agreements        String            @db.Text // JSON
+  adminNotes        String?           @db.Text
+  reviewedAt        DateTime?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
 
   // Relations
-  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  pet         Pet             @relation(fields: [petId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pet  Pet  @relation(fields: [petId], references: [id], onDelete: Cascade)
 
-  @@map("adoptions")
+  @@map("adoption_applications")
 }
 
 model Service {
-  id          String    @id @default(cuid())
+  id          String  @id @default(cuid())
   name        String
-  description String?   @db.Text
-  price       Decimal?  @db.Decimal(10, 2)
-  duration    Int?      // 服务时长（分钟）
+  description String  @db.Text
+  price       String
+  duration    String
   category    String
-  isActive    Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  features    String  @db.Text // JSON array
+  image       String?
+  active      Boolean @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   // Relations
-  bookings    Booking[]
+  bookings Booking[]
 
   @@map("services")
 }
 
 model Booking {
-  id          String        @id @default(cuid())
-  userId      String
-  serviceId   String
-  appointmentDate DateTime
-  status      BookingStatus @default(PENDING)
-  notes       String?       @db.Text
-  adminNotes  String?       @db.Text
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  id             String        @id @default(cuid())
+  userId         String
+  serviceId      String
+  status         BookingStatus @default(PENDING)
+  date           DateTime
+  time           String
+  serviceType    String        @default("in-store") // in-store, home-visit
+  petInfo        String        @db.Text // JSON
+  contactInfo    String        @db.Text // JSON
+  specialRequests String?      @db.Text
+  totalAmount    Decimal       @db.Decimal(10, 2)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 
   // Relations
-  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  service     Service       @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
 
   @@map("bookings")
 }
 
 model BlogPost {
-  id          String    @id @default(cuid())
+  id          String   @id @default(cuid())
   title       String
-  content     String    @db.Text
-  excerpt     String?
-  coverImage  String?
+  content     String   @db.LongText
+  excerpt     String   @db.Text
+  image       String?
+  category    String
+  tags        String   @db.Text // JSON array
+  published   Boolean  @default(false)
+  views       Int      @default(0)
+  readTime    String
   authorId    String
-  category    String?
-  tags        String?   // JSON array
-  isPublished Boolean   @default(false)
   publishedAt DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   // Relations
-  author      User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  comments    Comment[]
-  likes       Like[]
+  author   User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  comments Comment[]
+  likes    Like[]
 
   @@map("blog_posts")
 }
@@ -146,36 +154,35 @@ model BlogPost {
 model Comment {
   id        String   @id @default(cuid())
   content   String   @db.Text
-  userId    String
+  authorId  String
   postId    String
-  parentId  String?  // 用于回复评论
-  isActive  Boolean  @default(true)
+  parentId  String?  // For nested comments
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Relations
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  post      BlogPost  @relation(fields: [postId], references: [id], onDelete: Cascade)
-  parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
-  replies   Comment[] @relation("CommentReplies")
+  author User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  post   BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  parent Comment? @relation("CommentReplies", fields: [parentId], references: [id])
+  replies Comment[] @relation("CommentReplies")
 
   @@map("comments")
 }
 
 model Like {
-  id        String   @id @default(cuid())
-  userId    String
-  postId    String?
-  petId     String?
+  id     String    @id @default(cuid())
+  userId String
+  petId  String?
+  postId String?
   createdAt DateTime @default(now())
 
   // Relations
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  post      BlogPost? @relation(fields: [postId], references: [id], onDelete: Cascade)
-  pet       Pet?      @relation(fields: [petId], references: [id], onDelete: Cascade)
+  user User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pet  Pet?      @relation(fields: [petId], references: [id], onDelete: Cascade)
+  post BlogPost? @relation(fields: [postId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, postId])
   @@unique([userId, petId])
+  @@unique([userId, postId])
   @@map("likes")
 }
 
@@ -186,69 +193,54 @@ model Favorite {
   createdAt DateTime @default(now())
 
   // Relations
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  pet       Pet      @relation(fields: [petId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pet  Pet  @relation(fields: [petId], references: [id], onDelete: Cascade)
 
   @@unique([userId, petId])
   @@map("favorites")
 }
 
 model VolunteerApplication {
-  id          String              @id @default(cuid())
-  userId      String
-  name        String
-  phone       String
-  email       String
-  age         Int?
-  occupation  String?
-  experience  String?             @db.Text
-  motivation  String?             @db.Text
-  availability String?            @db.Text
-  skills      String?             @db.Text
-  status      ApplicationStatus   @default(PENDING)
-  adminNotes  String?             @db.Text
-  createdAt   DateTime            @default(now())
-  updatedAt   DateTime            @updatedAt
+  id                  String            @id @default(cuid())
+  userId              String            @unique
+  status              ApplicationStatus @default(PENDING)
+  availableTime       String            @db.Text // JSON array
+  preferredActivities String            @db.Text // JSON array
+  experience          String?           @db.Text
+  skills              String?           @db.Text
+  motivation          String            @db.Text
+  emergencyContact    String            @db.Text // JSON
+  hasTransport        Boolean           @default(false)
+  canTravel           Boolean           @default(false)
+  adminNotes          String?           @db.Text
+  reviewedAt          DateTime?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
 
   // Relations
-  user        User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("volunteer_applications")
 }
 
 model Donation {
-  id          String        @id @default(cuid())
-  userId      String?
-  donorName   String?
-  donorEmail  String?
-  amount      Decimal       @db.Decimal(10, 2)
-  type        DonationType
-  message     String?       @db.Text
-  isAnonymous Boolean       @default(false)
-  status      PaymentStatus @default(PENDING)
-  paymentId   String?
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  id            String        @id @default(cuid())
+  userId        String?
+  amount        Decimal       @db.Decimal(10, 2)
+  type          DonationType  @default(ONE_TIME)
+  project       String
+  paymentMethod String
+  status        PaymentStatus @default(PENDING)
+  isAnonymous   Boolean       @default(false)
+  message       String?       @db.Text
+  transactionId String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 
   // Relations
-  user        User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@map("donations")
-}
-
-model Notification {
-  id        String           @id @default(cuid())
-  userId    String
-  title     String
-  content   String           @db.Text
-  type      NotificationType
-  isRead    Boolean          @default(false)
-  createdAt DateTime         @default(now())
-
-  // Relations
-  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("notifications")
 }
 
 // Enums
@@ -258,32 +250,33 @@ enum UserRole {
   VOLUNTEER
 }
 
-enum Gender {
-  MALE
-  FEMALE
-  UNKNOWN
+enum PetType {
+  DOG
+  CAT
+  RABBIT
+  BIRD
+  HAMSTER
+  OTHER
 }
 
-enum PetSize {
-  SMALL
-  MEDIUM
-  LARGE
-  EXTRA_LARGE
+enum PetGender {
+  MALE
+  FEMALE
 }
 
 enum PetStatus {
   AVAILABLE
+  PENDING
   ADOPTED
-  RESERVED
   MEDICAL_CARE
   NOT_AVAILABLE
 }
 
-enum AdoptionStatus {
+enum ApplicationStatus {
   PENDING
   APPROVED
   REJECTED
-  COMPLETED
+  UNDER_REVIEW
 }
 
 enum BookingStatus {
@@ -293,17 +286,9 @@ enum BookingStatus {
   CANCELLED
 }
 
-enum ApplicationStatus {
-  PENDING
-  APPROVED
-  REJECTED
-}
-
 enum DonationType {
-  MONEY
-  SUPPLIES
-  FOOD
-  MEDICAL
+  ONE_TIME
+  MONTHLY
 }
 
 enum PaymentStatus {
@@ -311,12 +296,4 @@ enum PaymentStatus {
   COMPLETED
   FAILED
   REFUNDED
-}
-
-enum NotificationType {
-  ADOPTION_UPDATE
-  BOOKING_REMINDER
-  VOLUNTEER_UPDATE
-  DONATION_THANKS
-  SYSTEM_NOTICE
 }
