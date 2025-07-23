@@ -1,37 +1,39 @@
-import { type NextRequest, NextResponse } from "next/server"
+import type { NextRequest } from "next/server"
 import { z } from "zod"
 
-export function createApiResponse<T>(data: T, status = 200) {
-  return NextResponse.json({ success: true, data }, { status })
+export interface ApiResponse<T = any> {
+  success: boolean
+  data?: T
+  error?: string
+  message?: string
 }
 
-export function createApiError(message: string, status = 400) {
-  return NextResponse.json({ success: false, error: message }, { status })
+export interface PaginationParams {
+  page: number
+  limit: number
+  skip: number
 }
 
-export async function validateRequest<T>(
-  request: NextRequest,
-  schema: z.ZodSchema<T>,
-): Promise<{ data: T; error: null } | { data: null; error: NextResponse }> {
-  try {
-    const body = await request.json()
-    const data = schema.parse(body)
-    return { data, error: null }
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return {
-        data: null,
-        error: createApiError(`Validation error: ${error.errors.map((e) => e.message).join(", ")}`, 400),
-      }
-    }
-    return {
-      data: null,
-      error: createApiError("Invalid request body", 400),
-    }
-  }
+export function createApiResponse<T>(data: T, message?: string): Response {
+  return Response.json({
+    success: true,
+    data,
+    message,
+  })
 }
 
-export function getPaginationParams(searchParams: URLSearchParams) {
+export function createApiError(message: string, status = 400): Response {
+  return Response.json(
+    {
+      success: false,
+      error: message,
+    },
+    { status },
+  )
+}
+
+export function getPaginationParams(request: NextRequest): PaginationParams {
+  const searchParams = request.nextUrl.searchParams
   const page = Math.max(1, Number.parseInt(searchParams.get("page") || "1"))
   const limit = Math.min(50, Math.max(1, Number.parseInt(searchParams.get("limit") || "10")))
   const skip = (page - 1) * limit
@@ -39,31 +41,32 @@ export function getPaginationParams(searchParams: URLSearchParams) {
   return { page, limit, skip }
 }
 
-export function handleError(error: unknown) {
-  console.error("API Error:", error)
-
-  if (error instanceof z.ZodError) {
-    return NextResponse.json(
-      {
-        error: "Validation failed",
-        details: error.errors,
-      },
-      { status: 400 },
-    )
+export async function validateRequest<T>(
+  request: NextRequest,
+  schema: z.ZodSchema<T>,
+): Promise<{ success: true; data: T } | { success: false; error: string }> {
+  try {
+    const body = await request.json()
+    const data = schema.parse(body)
+    return { success: true, data }
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return {
+        success: false,
+        error: error.errors.map((e) => `${e.path.join(".")}: ${e.message}`).join(", "),
+      }
+    }
+    return { success: false, error: "Invalid request data" }
   }
-
-  if (error instanceof Error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
-  }
-
-  return NextResponse.json({ error: "Internal server error" }, { status: 500 })
 }
 
-export function createSuccessResponse(data: any, status = 200) {
-  return NextResponse.json({ success: true, data }, { status })
-}
-
-export async function getSearchParams(request: NextRequest) {
-  const { searchParams } = new URL(request.url)
-  return Object.fromEntries(searchParams.entries())
+export function getSearchParams(request: NextRequest) {
+  const searchParams = request.nextUrl.searchParams
+  return {
+    search: searchParams.get("search") || "",
+    species: searchParams.get("species") || "",
+    gender: searchParams.get("gender") || "",
+    status: searchParams.get("status") || "",
+    location: searchParams.get("location") || "",
+  }
 }

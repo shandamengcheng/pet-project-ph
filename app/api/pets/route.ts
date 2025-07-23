@@ -1,22 +1,23 @@
 import type { NextRequest } from "next/server"
 import { db } from "@/lib/db"
-import { createApiResponse, createApiError, getPaginationParams } from "@/lib/api-utils"
+import { createApiResponse, createApiError, getPaginationParams, getSearchParams } from "@/lib/api-utils"
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    const { page, limit, skip } = getPaginationParams(searchParams)
+    const { page, limit, skip } = getPaginationParams(request)
+    const { search, species, gender, status, location } = getSearchParams(request)
 
-    const species = searchParams.get("species")
-    const gender = searchParams.get("gender")
-    const status = searchParams.get("status")
-    const location = searchParams.get("location")
-    const search = searchParams.get("search")
-
+    // Build where clause
     const where: any = {}
-    if (species) where.species = species.toUpperCase()
-    if (gender) where.gender = gender.toUpperCase()
-    if (status) where.status = status.toUpperCase()
+
+    if (search) {
+      // In a real database, this would be a proper search query
+      where.name = search
+    }
+
+    if (species) where.species = species
+    if (gender) where.gender = gender
+    if (status) where.status = status
     if (location) where.location = location
 
     const [pets, total] = await Promise.all([
@@ -25,28 +26,20 @@ export async function GET(request: NextRequest) {
         skip,
         take: limit,
       }),
-      db.pet.count(),
+      db.pet.count({ where }),
     ])
 
-    // Filter by search term if provided
-    let filteredPets = pets
-    if (search) {
-      const searchLower = search.toLowerCase()
-      filteredPets = pets.filter(
-        (pet) =>
-          pet.name.toLowerCase().includes(searchLower) ||
-          pet.breed.toLowerCase().includes(searchLower) ||
-          pet.description.toLowerCase().includes(searchLower),
-      )
-    }
+    const totalPages = Math.ceil(total / limit)
 
     return createApiResponse({
-      pets: filteredPets,
+      pets,
       pagination: {
         page,
         limit,
         total,
-        totalPages: Math.ceil(total / limit),
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1,
       },
     })
   } catch (error) {

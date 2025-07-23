@@ -9,13 +9,11 @@
     "start": "next start"
   },
   "dependencies": {
-    "@hookform/resolvers": "^3.3.2",
     "@prisma/client": "latest",
     "@radix-ui/react-accordion": "latest",
     "@radix-ui/react-alert-dialog": "latest",
     "@radix-ui/react-aspect-ratio": "latest",
     "@radix-ui/react-avatar": "latest",
-    "@radix-ui/react-calendar": "^1.0.0",
     "@radix-ui/react-checkbox": "latest",
     "@radix-ui/react-collapsible": "latest",
     "@radix-ui/react-context-menu": "latest",
@@ -31,7 +29,6 @@
     "@radix-ui/react-scroll-area": "latest",
     "@radix-ui/react-select": "latest",
     "@radix-ui/react-separator": "latest",
-    "@radix-ui/react-sheet": "^1.0.0",
     "@radix-ui/react-slider": "latest",
     "@radix-ui/react-slot": "latest",
     "@radix-ui/react-switch": "latest",
@@ -63,7 +60,6 @@
     "next-themes": "latest",
     "nodemailer": "latest",
     "path": "latest",
-    "prisma": "latest",
     "react": "^18",
     "react-day-picker": "latest",
     "react-dom": "^18",
@@ -81,9 +77,10 @@
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "autoprefixer": "^10.0.1",
-    "eslint": "^8.0.0",
-    "eslint-config-next": "14.2.16",
+    "eslint": "^8",
+    "eslint-config-next": "14.0.4",
     "postcss": "^8.5",
+    "prisma": "^5.7.1",
     "tailwindcss": "^3.3.0",
     "typescript": "^5"
   }
