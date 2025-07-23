@@ -1,10 +1,13 @@
 const express = require("express")
-const mongoose = require("mongoose")
+const { PrismaClient } = require("@prisma/client")
 const cors = require("cors")
 const helmet = require("helmet")
 const rateLimit = require("express-rate-limit")
 const morgan = require("morgan")
 require("dotenv").config()
+
+// Initialize Prisma Client
+const prisma = new PrismaClient()
 
 // Import routes
 const authRoutes = require("./routes/auth")
@@ -15,6 +18,8 @@ const bookingRoutes = require("./routes/bookings")
 const blogRoutes = require("./routes/blog")
 const userRoutes = require("./routes/users")
 const uploadRoutes = require("./routes/upload")
+const volunteerRoutes = require("./routes/volunteers")
+const donationRoutes = require("./routes/donations")
 
 const app = express()
 
@@ -31,6 +36,9 @@ app.use(
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // limit each IP to 100 requests per windowMs
+  message: {
+    error: "Too many requests from this IP, please try again later.",
+  },
 })
 app.use(limiter)
 
@@ -44,14 +52,11 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }))
 // Static files
 app.use("/uploads", express.static("uploads"))
 
-// Database connection
-mongoose
-  .connect(process.env.MONGODB_URI || "mongodb://localhost:27017/petwebsite", {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
-  .then(() => console.log("Connected to MongoDB"))
-  .catch((err) => console.error("MongoDB connection error:", err))
+// Make Prisma available in routes
+app.use((req, res, next) => {
+  req.prisma = prisma
+  next()
+})
 
 // Routes
 app.use("/api/auth", authRoutes)
@@ -62,22 +67,53 @@ app.use("/api/bookings", bookingRoutes)
 app.use("/api/blog", blogRoutes)
 app.use("/api/users", userRoutes)
 app.use("/api/upload", uploadRoutes)
+app.use("/api/volunteers", volunteerRoutes)
+app.use("/api/donations", donationRoutes)
 
 // Health check endpoint
-app.get("/api/health", (req, res) => {
-  res.json({
-    status: "OK",
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-  })
+app.get("/api/health", async (req, res) => {
+  try {
+    // Test database connection
+    await prisma.$queryRaw`SELECT 1`
+    res.json({
+      status: "OK",
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      database: "Connected",
+    })
+  } catch (error) {
+    res.status(500).json({
+      status: "ERROR",
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      database: "Disconnected",
+      error: error.message,
+    })
+  }
 })
 
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack)
+
+  // Prisma error handling
+  if (err.code === "P2002") {
+    return res.status(400).json({
+      message: "Duplicate entry error",
+      error: process.env.NODE_ENV === "development" ? err.message : "Data already exists",
+    })
+  }
+
+  if (err.code === "P2025") {
+    return res.status(404).json({
+      message: "Record not found",
+      error: process.env.NODE_ENV === "development" ? err.message : "Requested data not found",
+    })
+  }
+
   res.status(500).json({
     message: "Something went wrong!",
-    error: process.env.NODE_ENV === "development" ? err.message : {},
+    error: process.env.NODE_ENV === "development" ? err.message : "Internal server error",
   })
 })
 
@@ -87,8 +123,23 @@ app.use("*", (req, res) => {
 })
 
 const PORT = process.env.PORT || 5000
+
+// Graceful shutdown
+process.on("SIGINT", async () => {
+  console.log("Received SIGINT, shutting down gracefully...")
+  await prisma.$disconnect()
+  process.exit(0)
+})
+
+process.on("SIGTERM", async () => {
+  console.log("Received SIGTERM, shutting down gracefully...")
+  await prisma.$disconnect()
+  process.exit(0)
+})
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
+  console.log(`Environment: ${process.env.NODE_ENV || "development"}`)
 })
 
 module.exports = app
